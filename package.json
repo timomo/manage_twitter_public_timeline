@@ -1,0 +1,18 @@
+{
+  "name": "my-test",
+  "devDependencies": {
+    "babelify": "^6.1.1",
+    "browserify": "^10.2.1",
+    "backbone": "^1.2.3",
+    "jquery": "^2.1.4",
+    "easyui": "^1.4.2",
+    "react": "^0.14.2",
+    "react-dom": "^0.14.2",
+    "gulp": "^3.8.11",
+    "vinyl-source-stream": "^1.1.0",
+    "gulp-webserver": "^0.9.1"
+  },
+  "scripts": {
+    "build": "browserify --debug --transform babelify src/js/manage_twitter_public_timeline.js --outfile bundle.js"
+  }
+}
