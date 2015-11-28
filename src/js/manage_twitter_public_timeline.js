@@ -9,5 +9,5 @@ require('easyui');
 
 ReactDOM.render(
   <TweetTableContainer />,
-  document.getElementById('tweet_table_container')
+  document.getElementById('aquarium')
 );

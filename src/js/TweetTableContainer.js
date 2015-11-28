@@ -56,21 +56,27 @@ export default class TweetTableContainer extends React.Component
     timerId = setTimeout(function() {
       request.abort();
       deferred.reject();
-    }, 5000);
+    }, 20000);
 
     request = jQuery.ajax({
       type: "POST",
       url: "manage_twitter_public_timeline_json.php",
       data: params,
       dataType: "json",
-      cache: false
+      cache: false,
+      xhrFields: {
+        withCredentials: true
+      }
     })
-    .done(function(data, dataType) {
+    .done(function(data, statusText, jqXHR) {
       clearTimeout(timerId);
-      this.setState({data: data});
+      this.setState({
+        total_entries: jqXHR.getResponseHeader('X-Total-Count'),
+        data: data
+      });
       return deferred.resolve();
     }.bind(this))
-    .fail(function(XMLHttpRequest, textStatus, errorThrown) {
+    .fail(function(jqXHR, statusText, errorThrown) {
       return deferred.reject();
     }.bind(this))
     .always(function() {

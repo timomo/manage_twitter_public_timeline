@@ -15,7 +15,10 @@ export default class TweetTableBody extends React.Component
           style={{height: "25px"}}
         >
           <td>
-            <input type="checkbox" name="row_id[]" value={row.id_str} />
+            <label className="checkbox">
+              <input type="checkbox" name="row_id[]" value={row.id_str} />
+              <i> </i>
+            </label>
           </td>
           <td>
             {row.timestamp_ms}
@@ -27,7 +30,7 @@ export default class TweetTableBody extends React.Component
             {user_description}
           </td>
           <td>
-            {data}
+            {row.data_short}
           </td>
         </tr>
       );

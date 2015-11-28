@@ -25,8 +25,8 @@ export default class TweetTablePagination extends React.Component
       });
     } else {
       jQuery("#" + this.props.id).pagination("refresh", {
-        total: this.props.total,
-        pageSize: this.props.current,
+        total: this.props.total_entries,
+        pageSize: this.state.entries_per_page,
         pageNumber: this.props.current_page
       });
     }
@@ -35,15 +35,22 @@ export default class TweetTablePagination extends React.Component
   componentDidUpdate(prevProps, prevState)
   {
     // noop
+    this.reload();
   }
 
   componentWillReceiveProps(nextProps)
   {
-    this.reload();
+    // this.reload();
   }
 
   render()
   {
+
+    return (
+      <ul className="pagination">
+      </ul>
+    );
+/*
     return (
       <div
         id="tweet_table_pagination"
@@ -52,6 +59,7 @@ export default class TweetTablePagination extends React.Component
       >
       </div>
     );
+*/
   }
 }
 

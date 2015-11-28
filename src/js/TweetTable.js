@@ -35,7 +35,8 @@ export default class TweetTable extends React.Component
   {
     return (
       <table
-        style={{height: "auto", border:"1px solid #ccc"}}
+        className="table table-bordered"
+        style={{height: "auto", border:"1px solid #ccc", width: "100%"}}
         id={this.state.id}
       >
         <TweetTableHeader />
