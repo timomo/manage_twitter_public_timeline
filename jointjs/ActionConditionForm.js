@@ -432,7 +432,7 @@ class ActionConditionForm extends Form
           structureArray[left][cnt] = link.source;
           structureArray[left + 1][cnt] = link.target;
         } else {
-          if (jQuery.inArray(link.source, structureArray[left]) === true) {
+          if (jQuery.inArray(link.source, structureArray[left]) !== -1) {
             structureArray[left][cnt] = link.source;
             structureArray[left + 1][cnt] = link.target;
           } else {
@@ -450,6 +450,8 @@ class ActionConditionForm extends Form
       }
       cnt += 1;
     }.bind(this));
+
+// console.debug(structureArray);
 
     var uniqueArray = [];
 
