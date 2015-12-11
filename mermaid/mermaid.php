@@ -1,7 +1,7 @@
 <?php
 
 require_once "/var/www/html/libs/common.php";
-require_once( "../wp-blog-header.php" );
+require_once( "../../wp-blog-header.php" );
 
 session_start();
 preload_libraries();
