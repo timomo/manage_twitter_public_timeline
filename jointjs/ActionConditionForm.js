@@ -56,8 +56,33 @@ class Form extends React.Component
           <label className="label col col-2">
             {data.label}
           </label>
-          <div className="col col-10">
+          <div className="input col col-10">
             {data.input}
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  renderInputTextarea(data)
+  {
+    var tmp = _.clone(data);
+    tmp.input = <textarea
+      type="text"
+      className={data.type}
+      id={data.id}
+      value={data.value}
+      onChange={this.changeInput.bind(this)}
+    />;
+
+    return (
+      <section>
+        <div className="row">
+          <label className="label col col-2">
+            {tmp.label}
+          </label>
+          <div className="textarea col col-10">
+            {tmp.input}
           </div>
         </div>
       </section>
@@ -78,9 +103,50 @@ class Form extends React.Component
     return this.renderSection(tmp);
   }
 
+  renderSelect(data, options)
+  {
+    var inputs = Object.keys(options).map(function(id) {
+      return <option key={id} value={id}>{options[id]}</option>
+    }.bind(this));
+    var tmp = _.clone(data);
+    tmp.input = <select
+      type="text"
+      className="input"
+      id={data.id}
+      value={data.value}
+      onChange={this.changeInput.bind(this)}
+    >
+      {inputs}
+    </select>;
+
+    return (
+      <section>
+        <div className="row">
+          <label className="label col col-2">
+            {tmp.label}
+          </label>
+          <div className="select col col-10">
+            {tmp.input}
+          </div>
+        </div>
+      </section>
+    );
+  }
+
   renderInput(data)
   {
-    return this.renderInputText(data);
+console.log(arguments[1]);
+    switch (data.type) {
+      case 'select':
+        return this.renderSelect(data, arguments[1]);
+        break;
+      case 'textarea':
+        return this.renderInputTextarea(data);
+        break;
+      default:
+        return this.renderInputText(data);
+        break;
+    }
   }
 }
 
@@ -354,7 +420,8 @@ class ActionConditionForm extends Form
     var width = this.paper.options.width;
     var height = this.paper.options.height;
     var i = 1;
-    var elements = jQuery.extend({}, this.elements);
+    // var elements = jQuery.extend({}, this.elements);
+    var elements = {};
     var structureArray = [];
     var linkArray = [];
     var start = this.eNormal.clone().attr({text: {text: 'start'}});
@@ -387,6 +454,10 @@ class ActionConditionForm extends Form
       elementArray.push(task);
       elements[plugin.id] = task;
     }.bind(this));
+
+    linkArray.sort(function(a, b) {
+      return a.source - b.source;
+    });
 
     // start
     (function() {
@@ -466,8 +537,8 @@ class ActionConditionForm extends Form
       uniqueArray[a] = jQuery.unique(uniqueArray[a]);
     }
 
-// console.log(structureArray);
-// console.log(uniqueArray);
+console.debug(structureArray);
+console.debug(uniqueArray);
 
     // elementArray.unshift(start);
     // elementArray.push(end);
@@ -1245,10 +1316,10 @@ console.warn(data.id);
       module: datas.plugin,
       id: _.uniqueId('T_'),
       config: null,
-      incoming: 'S_1',
-      outgoing: 'E_1',
+      incoming: ['S_1'],
+      outgoing: ['E_1'],
     };
-    input.plugins.push(data);
+    input.plugins.unshift(data);
     datas.input = input;
     this.setState({datas: datas});
     this.handleReCreateGraph(new Event('click'));

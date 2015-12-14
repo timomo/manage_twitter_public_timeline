@@ -7,7 +7,7 @@ session_start();
 preload_libraries();
 $css = [
     '<link href="http://www.jointjs.com/downloads/joint.css" media="screen" type="text/css" rel="stylesheet" />',
-    '<link href="form.css" media="screen" type="text/css" rel="stylesheet" />',
+    '<link href="form.css?ver='. filemtime('form.css'). '" media="screen" type="text/css" rel="stylesheet" />',
 ];
 get_smartadmin_header($css);
 get_smartadmin_body_header();
@@ -59,7 +59,7 @@ $js = [
     '<script src="http://www.jointjs.com/js/vendor/backbone/backbone-min.js"></script>',
     '<script src="http://www.jointjs.com/downloads/joint.js"></script>',
 #   '<script src="app.js" type="text/babel"></script>',
-    '<script src="Form.js" type="text/babel"></script>',
-    '<script src="ActionConditionForm.js" type="text/babel"></script>',
+    '<script src="Form.js?ver='. filemtime('Form.js'). '" type="text/babel"></script>',
+    '<script src="ActionConditionForm.js?ver='. filemtime('ActionConditionForm.js'). '" type="text/babel"></script>',
 ];
 get_smartadmin_footer($js);
