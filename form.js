@@ -331,7 +331,7 @@ console.log(model);
   draw()
   {
     this.graph.clear();
-    var y = 130;
+    var y = 30;
     var elementArray = [];
     var maxWidth = 0;
     var width = this.paper.options.width;
@@ -343,6 +343,7 @@ console.log(model);
     var startOutgoing = [];
     var endIncoming = [];
     var tmpArray = [];
+    var tmpHash = {};
     var runCnt = 0;
     var uniqueArray = [];
 
@@ -385,14 +386,12 @@ console.log(model);
     }.bind(this));
 
     linkArray.sort(function(a, b) {
-      /*
       if (a.source === 'S_1' || b.source === 'S_1') {
-        return 1;
-      }
-      if (a.source === 'E_1' || b.source === 'E_1') {
         return -1;
       }
-      */
+      if (a.source === 'E_1' || b.source === 'E_1') {
+        return 1;
+      }
       if (a.source < b.source) {
         return -1;
       }
@@ -445,6 +444,7 @@ console.log(model);
       }
     }.bind(this));
 
+    // uniq処理
     for (var a = 0; a < structureArray.length; a++) {
       uniqueArray[a] = [];
       for (var b = 0; b < structureArray[a].length; b++) {
@@ -454,6 +454,31 @@ console.log(model);
         uniqueArray[a].push(structureArray[a][b]);
       }
       uniqueArray[a] = jQuery.unique(uniqueArray[a]);
+    }
+
+    // 重複を消す
+    tmpArray = [];
+    tmpHash = {};
+    for (var a = uniqueArray.length - 1; a > -1; a--) {
+      for (var b = uniqueArray[a].length - 1; b > -1; b--) {
+        if (uniqueArray[a][b] in tmpHash === true) {
+          continue;
+        }
+        if (tmpArray[a] === undefined) {
+          tmpArray[a] = [];
+        }
+        tmpHash[uniqueArray[a][b]] = true;
+        tmpArray[a].push(uniqueArray[a][b]);
+      }
+    }
+    // 空行を消す
+    var i = 0;
+    uniqueArray = [];
+    for (var a = 0; a < tmpArray.length; a++) {
+      if (tmpArray[a].length !== 0) {
+        uniqueArray[i] = tmpArray[a];
+        i++;
+      }
     }
 
     // console.log(structureArray);

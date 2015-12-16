@@ -52,14 +52,24 @@ get_smartadmin_body_header();
 <?php
 get_smartadmin_body_footer();
 $js = [
-    '<script src="react-0.14.3.js"></script>',
-    '<script src="react-dom-0.14.3.js"></script>',
-    '<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-core/5.8.23/browser.min.js"></script>',
+#   '<script src="react-0.14.3.js"></script>',
+#   '<script src="react-dom-0.14.3.js"></script>',
+#   '<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-core/5.8.23/browser.min.js"></script>',
+    
+    '<script src="https://cdnjs.cloudflare.com/ajax/libs/react/0.13.3/react.js"></script>',
+    '<script src="https://cdnjs.cloudflare.com/ajax/libs/react/0.13.3/react-with-addons.js"></script>',
+    '<script src="https://cdnjs.cloudflare.com/ajax/libs/react/0.13.3/JSXTransformer.js"></script>',
+
     '<script src="http://www.jointjs.com/js/vendor/lodash/lodash.min.js"></script>',
     '<script src="http://www.jointjs.com/js/vendor/backbone/backbone-min.js"></script>',
     '<script src="http://www.jointjs.com/downloads/joint.js"></script>',
+
+    '<script src="trans.js?ver='. filemtime('trans.js'). '"></script>',
+    '<script src="Form.js?ver='. filemtime('Form.js'). '" type="text/jsx;harmony=true"></script>',
+    '<script src="../form.js?ver='. filemtime('../form.js'). '" type="text/jsx;harmony=true"></script>',
+
 #   '<script src="app.js" type="text/babel"></script>',
-    '<script src="Form.js?ver='. filemtime('Form.js'). '" type="text/babel"></script>',
-    '<script src="ActionConditionForm.js?ver='. filemtime('ActionConditionForm.js'). '" type="text/babel"></script>',
+#   '<script src="Form.js?ver='. filemtime('Form.js'). '" type="text/babel"></script>',
+#   '<script src="ActionConditionForm.js?ver='. filemtime('ActionConditionForm.js'). '" type="text/babel"></script>',
 ];
 get_smartadmin_footer($js);
