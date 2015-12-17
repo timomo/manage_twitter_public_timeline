@@ -383,7 +383,15 @@ console.log(model);
       }.bind(this));
       elementArray.push(task);
       elements[plugin.id] = task;
+
+      task.position(50, y);
+
+      this.graph.addCell([task]);
+
+      y += 100;
     }.bind(this));
+
+    y = 30;
 
     linkArray.sort(function(a, b) {
       if (a.source === 'S_1' || b.source === 'S_1') {
@@ -491,7 +499,7 @@ console.log(model);
         var element = elements[id];
         var x = (maxWidth - element.attributes.size.width) / 2 + (width / 4);
         element.position(x, y);
-        this.graph.addCell([element]);
+        // this.graph.addCell([element]);
       } else {
         var x = 50;
         if (subUniqueArray.length % 2 === 0) { // 偶数
@@ -500,7 +508,7 @@ console.log(model);
             var element = elements[id];
             element.position(x, y);
             x += 180;
-            this.graph.addCell([element]);
+            // this.graph.addCell([element]);
           }
         } else { // 奇数
           for (var b = 0; b < subUniqueArray.length; b++) {
@@ -508,7 +516,7 @@ console.log(model);
             var element = elements[id];
             element.position(x, y);
             x += 180;
-            this.graph.addCell([element]);
+            // this.graph.addCell([element]);
           }
         }
       }
@@ -516,6 +524,7 @@ console.log(model);
     }
 
     // startとendだけ別呼び出し
+    /*
     (function() {
       if (uniqueArray.length > 0) {
         var element;
@@ -531,7 +540,7 @@ console.log(model);
         }
       }
     }.bind(this)());
-
+    */
 /*
     this.paper.scaleContentToFit({
       scaleGrid: 0.9
@@ -694,9 +703,74 @@ console.log(model);
 
   returnShowDatas(id)
   {
+    var url_api = this.props.url_api;
+    if (Boolean(this.state.url_api) !== false) {
+      url_api = this.state.url_api;
+    }
+    var url = url_api + "/" + id;
+
+    jQuery.ajax({
+      url: url,
+      dataType: 'json',
+      type: 'GET',
+      cache: false,
+    })
+    .done(function(data, textStatus, jqXHR) {
+      var datas = this.reconstructionData(data);
+      var ret = {input: datas};
+      this.setState({datas: ret});
+      this.initCondition();
+      this.copyDatas();
+    }.bind(this))
+    .fail(function(jqXHR, textStatus, errorThrown) {
+      console.error(status, errorThrown.toString());
+    }.bind(this))
+    ;
+  }
+
+  reconstructionData(datas)
+  {
+    var defaults = {
+      plugins: []
+    };
+    if (datas.flows === undefined) {
+      return defaults;
+    }
+    var map = {};
+    datas.flows.forEach(function(flow) {
+      map[flow.orderby] = flow.action_sub_id;
+    }.bind(this));
+
+    datas.flows.forEach(function(flow) {
+      var tmp = {};
+      var orderby = flow.orderby;
+      tmp.id = flow.action_sub_id;
+      tmp.module = flow.plugin[0].plugin_name;
+      tmp.incoming = [];
+      tmp.outgoing = [];
+
+      var outgoing1 = map[orderby + 10];
+      var outgoing2 = map[orderby + 11];
+
+      if (outgoing1 !== undefined) {
+        tmp.outgoing.push(outgoing1);
+      }
+      if (outgoing2 !== undefined) {
+        tmp.outgoing.push(outgoing2);
+      }
+
+      defaults.plugins.push(tmp);
+    }.bind(this));
+    return defaults;
+  }
+
+/*
+  returnShowDatas(id)
+  {
     var url = this.state.url_api + "/" + id;
     this.getCondition(id);
   }
+*/
 
   returnValidationRules()
   {
@@ -714,8 +788,8 @@ console.log(model);
   componentWillMount()
   {
     var user_id = "";
-    this.returnShowDatas(user_id);
     this.getPlugin();
+    this.returnShowDatas(user_id);
   }
 
   componentDidUpdate(prevProps, prevState)
@@ -735,10 +809,6 @@ console.log(model);
         this.state.datas.input = input;
       }
     }
-/*
-    if (_.isEqual(this.state.elements, prevState.elements) === false) {
-    }
-*/
   }
 
   reCreateLink()
@@ -1062,9 +1132,10 @@ console.warn(data.id);
 
   renderAddPlugin(datasObj)
   {
-    var plugins = [];
-    this.state.plugin.forEach(function(plugin) {
-      plugins.push(plugin.name);
+    var plugins = {};
+    Object.keys(this.state.plugin).forEach(function(id) {
+      var plugin = this.state.plugin[id];
+      plugins[plugin.plugin_id] = plugin.plugin_name;
     }.bind(this));
 
     return (
@@ -1311,11 +1382,11 @@ console.warn(data.id);
     }
     var plugin = this.state.plugin[datas.plugin];
     var data = {
-      module: plugin.name,
-      id: _.uniqueId('T_'),
+      module: plugin.plugin_name,
+      id: _.uniqueId(),
       config: null,
-      incoming: ['S_1'],
-      outgoing: ['E_1'],
+      incoming: [],
+      outgoing: [],
     };
     this.setPlugin(data);
     this.handleReCreateGraph(new Event('click'));
@@ -1348,7 +1419,11 @@ console.warn(data.id);
     })
     .done(function(data) {
       var state = {};
-      state[key] = data;
+      var ret = {};
+      data.forEach(function(plugin) {
+        ret[plugin.plugin_id] = plugin;
+      });
+      state[key] = ret;
       this.setState(state);
       this.setSelect(key);
     }.bind(this))
@@ -1376,7 +1451,7 @@ console.warn(data.id);
 
 ActionConditionForm.defaultProps = {
   url_api_plugin: "/orion/api/v1/action/plugin",
-  url_api_condition: "/orion/api/v1/action/condition2",
+  url_api_condition: "/orion/api/v1/action/condition",
   url_api: "/orion/api/v1/action",
   url_redirect: "/orion/action",
   fixed_values: [
@@ -1384,8 +1459,3 @@ ActionConditionForm.defaultProps = {
     {id: 'outgoing', type: 'select'},
   ]
 };
-
-var actionConditionForm = React.render(
-    <ActionConditionForm />,
-    document.getElementById('action-form')
-);
