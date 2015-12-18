@@ -1,1270 +1,808 @@
-class ActionConditionForm extends Form
+class Form extends AbstractBase
 {
-  constructor(props)
-  {
-    super(props);
-    var datas = {
-      input: "",
-      plugin: 0
-    };
-    this.graph = null;
-    this.paper = null;
-    this.pn = null;
-    this.erd = null;
-    this.pReady = null;
-    this.pShape = null;
-    this.pProduce = null;
-    this.pRect = null;
-    this.eRel = null;
-    this.eEntity = null;
-    this.eNormal = null;
-    this.eIsa = null;
-    this.elements = {};
-    this.state = {
-      selectId: null,
-      svgCode: null,
-      datas: datas,
-      commitDatas: {},
-      server_error: null,
-      invalids: {},
-      plugin: [],
-      disabled_button: false
-    };
-    this.setup();
-  }
-
-  setup()
-  {
-    var graph = new joint.dia.Graph();
-    var paper = new joint.dia.Paper({
-      el: jQuery('#mermaid-view'),
-      width: 610,
-      height: 1360,
-      gridSize: 10,
-      perpendicularLinks: true,
-      model: graph
-    });
-    var pn = joint.shapes.pn;
-    var erd = joint.shapes.erd;
-    var pReady = new pn.Place({
-      position: {x: 120, y: 50},
-      attrs: {
-        '.label': {text: 'ready', fill: '#7c68fc'},
-        '.root' : {stroke: '#9586fd', 'stroke-width': 3},
-        '.tokens > circle': {fill : '#7a7e9b'}
-      },
-      tokens: 0
-    });
-    var pShape = new joint.shapes.basic.Path({
-      position: { x: 120, y: 50 },
-      size: { width: 100, height: 40 },
-      attrs: {
-        text: { text: 'joint', 'ref-y': 0.5, 'y-alignment': 'middle' },
-        path: { d: 'M 0 0 L 100 0 80 20 100 40 0 40 Z' }
-      }
-    });
-    var pRect = new joint.shapes.basic.Rect({
-      position: { x: 120, y: 50 },
-      size: { width: 210, height: 40 },
-      attrs: {
-        text: { text: 'joint', 'ref-y': 0.5, 'y-alignment': 'middle' }
-      }
-    });
-    var pProduce = new pn.Transition({
-      position: { x: 50, y: 160 },
-      attrs: {
-        '.label': { text: 'produce', fill: '#fe854f' },
-        '.root' : { fill: '#9586fd', stroke: '#9586fd' }
-      }
-    });
-    var eRel = new erd.Relationship({
-      position: { x: 300, y: 390 },
-      size: { width: 40, height: 40 },
-      attrs: {
-        text: {
-          fill: '#ffffff',
-          text: '正常/異常',
-          'letter-spacing': 0,
-          style: { 'text-shadow': '1px 0 1px #333333' }
-        },
-        '.outer': {
-          fill: '#797d9a',
-          stroke: 'none',
-          filter: { name: 'dropShadow',  args: { dx: 0, dy: 2, blur: 1, color: '#333333' }}
-        }
-      }
-    });
-    var eEntity = new erd.Entity({
-      position: { x: 100, y: 200 },
-      size: { width: 150, height: 40 },
-      attrs: {
-        text: {
-          fill: '#ffffff',
-          text: 'Employee',
-          'font-size': 10,
-          'letter-spacing': 0,
-          style: { 'text-shadow': '1px 0 1px #333333' }
-        },
-        '.outer, .inner': {
-          fill: '#31d0c6',
-          stroke: 'none',
-          filter: { name: 'dropShadow',  args: { dx: 0.5, dy: 2, blur: 2, color: '#333333' }}
-        }
-      }
-    });
-    var eNormal = new erd.Normal({
-      position: { x: 75, y: 30 },
-      size: { width: 40, height: 40 },
-      attrs: {
-        text: {
-          fill: '#ffffff',
-          text: 'Name',
-          'font-size': 10,
-          'letter-spacing': 0,
-          style: { 'text-shadow': '1px 0 1px #333333' }
-        },
-        '.outer': {
-          fill: '#fe8550',
-          stroke: '#fe854f',
-          filter: { name: 'dropShadow',  args: { dx: 0, dy: 2, blur: 2, color: '#222138' }}
-        }
-      }
-    });
-    var eIsa = new erd.ISA({
-      position: { x: 125, y: 300 },
-      size: { width: 60, height: 40 },
-      attrs: {
-        text: {
-          text: 'ISA',
-          'font-size': 10,
-          fill: '#ffffff',
-          'letter-spacing': 0,
-          style: { 'text-shadow': '1px 0 1px #333333' }
-        },
-        polygon: {
-          fill: '#fdb664',
-          stroke: 'none',
-          filter: { name: 'dropShadow',  args: { dx: 0, dy: 2, blur: 1, color: '#333333' }}
-        }
-      }
-    });
-
-    paper.on('cell:pointerclick', function(cellView, evt, x, y) {
-      this.selectId(cellView);
-    }.bind(this));
-
-    paper.on('cell:pointerdown', function(cellView, evt, x, y) {
-      this.removeLink(cellView.model, 'both');
-    }.bind(this));
-
-    this.graph = graph;
-    this.paper = paper;
-    this.pn = pn;
-    this.erd = erd;
-    this.pReady = pReady;
-    this.pShape = pShape;
-    this.pProduce = pProduce;
-    this.pRect = pRect;
-    this.eRel = eRel;
-    this.eEntity = eEntity;
-    this.eNormal = eNormal;
-    this.eIsa = eIsa;
-  }
-
-  selectId(cellView)
-  {
-    var id = cellView.model.prop('properties/id');
-    this.setState({selectId: id});
-    var element = this.graph.getCell(cellView.model.id);
-    this.graph.getElements().forEach(function(e) {
-      if (element.id === e.id) {
-        e.attr('text/font-size', 20);
-      } else {
-        e.attr('text/font-size', 10);
-      }
-    }.bind(this));
-  }
-
-  changeLink(link)
-  {
-    if (link.isLink() === false) {
-      return false;
+    constructor(props) {
+        super(props);
     }
 
-    var sourceId = link.prop('source/id');
-    var targetId = link.prop('target/id');
-    var source = this.returnPluginByElementId(sourceId);
-    var target = this.returnPluginByElementId(targetId);
-
-    if (
-      _.isObject(source) === true &&
-      _.isObject(target) === true
-    ) {
-      if (jQuery.inArray(target.id, source.outgoing) === -1) {
-        source.outgoing.push(target.id);
-      }
-      this.setPlugin(source);
-      if (jQuery.inArray(source.id, target.incoming) === -1) {
-        target.incoming.push(source.id);
-      }
-      this.setPlugin(target);
-    }
-  }
-
-  removeLink(link, mode)
-  {
-    if (link.isLink() === false) {
-      return false;
+    getParameters() {
+        var arg = new Object;
+        var pair = location.search.substring(1).split('&');
+        for(var i=0; pair[i]; i++) {
+            var kv = pair[i].split('=');
+            arg[kv[0]] = kv[1];
+        }
+        return arg;
     }
 
-    var sourceId = link.prop('source/id');
-    var targetId = link.prop('target/id');
-    var source = this.returnPluginByElementId(sourceId);
-    var target = this.returnPluginByElementId(targetId);
+    // http://192.168.50.15/orion/user/21/edit ---> 21
+    getMyId() {
+        var user_id = location.pathname.replace(/\/edit$/, "").match(/\d+$/).join("");
+        return user_id;
+    }
 
-    if (mode === 'source' || mode === 'both') {
-      if (_.isObject(source) === true && source.outgoing !== undefined) {
-        if (_.isObject(target) === true) {
-          var outgoing = [];
-          source.outgoing.forEach(function(key) {
-            if (target.id !== key) {
-              outgoing.push(key);
+    returnDatasObject() {
+    }
+
+    handleClose(e) {
+        window.open('about:blank','_self').close();
+    }
+
+    handleCancel(e) {
+        window.history.back();
+    }
+
+    returnSubmitDatas(){
+        return {};
+    }
+
+    returnShowDatas(id) {
+        var url_api = this.props.url_api;
+        if (Boolean(this.state.url_api) !== false) {
+          url_api = this.state.url_api;
+        }
+        var url = url_api + "/" + id;
+
+        $.ajax({
+            url: url,
+            dataType: 'json',
+            type: 'GET',
+            cache: false,
+            success: function(data) {
+                this.setState({datas:data});
+            }.bind(this),
+            error: function(xhr, status, err) {
+                console.error(status, err.toString());
+            }.bind(this)
+        });
+    }
+
+    // @see https://github.com/js-cookie/js-cookie/blob/master/src/js.cookie.js
+    returnCookieXSRFToken() {
+        var rdecode = /(%[0-9A-Z]{2})+/g;
+        var cookies = document.cookie ? document.cookie.split('; ') : [];
+        for (var i = 0; i < cookies.length; i++) {
+            var parts = cookies[i].split('=');
+            var name = parts[0];
+            var cookie = parts[1];
+            cookie = cookie.replace(rdecode, decodeURIComponent);
+            if (name === 'XSRF-TOKEN') {
+                return cookie;
             }
-          }.bind(this));
-          source.outgoing = outgoing;
-          this.setPlugin(source);
         }
-      }
+        return null;
     }
-    if (mode === 'target' || mode === 'both') {
-      if (_.isObject(target) === true && target.incoming !== undefined) {
-        if (_.isObject(source) === true) {
-          var incoming = [];
-          target.incoming.forEach(function(key) {
-            // console.warn([source.id, key].join("="));
-            if (source.id !== key) {
-              incoming.push(key);
-            }
-          }.bind(this));
-          target.incoming = incoming;
-          this.setPlugin(target);
+
+    handleSubmit(e) {
+        var params = this.returnSubmitDatas();
+        this.setState({disabled_button: true});
+        var token = this.returnCookieXSRFToken();
+
+        var url_api = this.props.url_api;
+        if (Boolean(this.state.url_api) !== false) {
+          url_api = this.state.url_api;
         }
-      }
+        var url_redirect = this.props.url_redirect;
+        if (Boolean(this.state.url_redirect) !== false) {
+          url_redirect = this.state.url_redirect;
+        }
+
+        $.ajax({
+            url: url_api,
+            headers: {'X-XSRF-TOKEN': token},
+            dataType: 'json',
+            type: 'POST',
+            data: params,
+            success: function(data) {
+                $('#myModal').modal('hide');
+                location.href = url_redirect;
+            }.bind(this),
+            error: function(xhr, status, err) {
+                console.error(status, err.toString());
+                $('#myModal').modal('hide');
+                var invalids = {};
+                this.setState({invalids: invalids});
+                if (422 === xhr.status) {
+                    var responseJson = JSON.parse(xhr.responseText);
+                    $.each(responseJson, function(id, value) {
+                        var divid = "div_" + id;
+                        var emid = "em_" + id;
+                        $('#' + divid).addClass("state-error");
+                        $('#' + emid).html(value.join(", "));
+                        invalids[id] = (invalids[id] ? invalids[id] : '') + value.join(", ");
+                    });
+                    this.setState({invalids: invalids});
+                } else if (403 === xhr.status) {
+                    this.setState({server_error: trans('messages.error.403')});
+                } else {
+                    this.setState({server_error: trans('messages.error.500')});
+                }
+            }.bind(this),
+            complete: function(xhr, status) {
+                this.setState({disabled_button: false});
+            }.bind(this)
+        });
     }
-  }
 
-  createLink(a, b)
-  {
-    var link = new this.pn.Link({
-      source: {id: a.id, selector: '.root'},
-      target: {id: b.id, selector: '.root'},
-      // router: {name: 'metro'},
-      attrs: {
-        '.connection': {
-          'fill': 'none',
-          'stroke-linejoin': 'round',
-          'stroke-width': '2',
-          'stroke': '#e2e2e2'
-        },
-        text: {
-          'font-size': 10
-        },
-        '.marker-source': {fill: '#e2e2e2'},
-        '.marker-target': {fill: '#e2e2e2'},
-      }
-    });
+    handleUpdate(e) {
+        var params = this.returnSubmitDatas();
+        this.setState({disabled_button: true});
+        var token = this.returnCookieXSRFToken();
 
-    link.on('change:target', function() {
-      this.changeLink(link);
-    }.bind(this));
-    link.on('change:source', function() {
-      this.changeLink(link);
-    }.bind(this));
+        var url_api = this.props.url_api;
+        if (Boolean(this.state.url_api) !== false) {
+          url_api = this.state.url_api;
+        }
+        var url_redirect = this.props.url_redirect;
+        if (Boolean(this.state.url_redirect) !== false) {
+          url_redirect = this.state.url_redirect;
+        }
+        var url = url_api + "/" + this.getMyId();
 
-    return link;
-  }
+        $.ajax({
+            url: url,
+            headers: {'X-XSRF-TOKEN': token},
+            dataType: 'json',
+            type: 'PUT',
+            data: params,
+            success: function(data) {
+                $('#myModal').modal('hide');
+                location.href = url_redirect;
+            }.bind(this),
+            error: function(xhr, status, err) {
+                console.error(status, err.toString());
+                $('#myModal').modal('hide');
+                var invalids = {};
+                this.setState({invalids: invalids});
+                if (422 === xhr.status) {
+                    var responseJson = JSON.parse(xhr.responseText);
+                    $.each(responseJson, function(id, value) {
+                        var divid = "div_" + id;
+                        var emid = "em_" + id;
+                        $('#' + divid).addClass("state-error");
+                        $('#' + emid).html(value.join(", "));
+                        invalids[id] = (invalids[id] ? invalids[id] : '') + value.join(", ");
+                    });
+                    this.setState({invalids: invalids});
+                } else if (403 === xhr.status) {
+                    this.setState({server_error: trans('messages.error.403')});
+                } else {
+                    this.setState({server_error: trans('messages.error.500')});
+                }
+            }.bind(this),
+            complete: function(xhr, status) {
+                this.setState({disabled_button: false});
+            }.bind(this)
+        });
+    }
 
-  createLabel(txt)
-  {
-    return {
-      labels: [
-        {
-          position: -20,
-          attrs: {
-            text: {dy: -8, text: txt, fill: '#ffffff'},
-            rect: {fill: 'none'}
+    handleDelete(e) {
+        var url_api = this.props.url_api;
+        if (Boolean(this.state.url_api) !== false) {
+          url_api = this.state.url_api;
+        }
+        var url_redirect = this.props.url_redirect;
+        if (Boolean(this.state.url_redirect) !== false) {
+          url_redirect = this.state.url_redirect;
+        }
+        var url = url_api + "/" + this.getMyId();
+        var params = {};
+        this.setState({disabled_button: true});
+        var token = this.returnCookieXSRFToken();
+        //params['_token'] = ('undefined' !== typeof this.state.datas['_token']) ? this.state.datas['_token'] : $("#csrf-token").attr('value');
+
+        $.ajax({
+            url: url,
+            headers: {'X-XSRF-TOKEN': token},
+            dataType: 'json',
+            type: 'DELETE',
+            data: params,
+            success: function(data) {
+                $('#myModalDel').modal('hide');
+                location.href = url_redirect;
+            }.bind(this),
+            error: function(xhr, status, err) {
+                console.error(status, err.toString());
+                $('#myModalDel').modal('hide');
+                var invalids = {};
+                this.setState({invalids: invalids});
+                if (422 === xhr.status) {
+                    var responseJson = JSON.parse(xhr.responseText);
+                    $.each(responseJson, function(id, value) {
+                        var divid = "div_" + id;
+                        var emid = "em_" + id;
+                        $('#' + divid).addClass("state-error");
+                        $('#' + emid).html(value.join(", "));
+                        invalids[id] = (invalids[id] ? invalids[id] : '') + value.join(", ");
+                    });
+                    this.setState({invalids: invalids});
+                } else if (403 === xhr.status) {
+                    this.setState({server_error: trans('messages.error.403')});
+                } else {
+                    this.setState({server_error: trans('messages.error.500')});
+                }
+            }.bind(this),
+            complete: function(xhr, status) {
+                this.setState({disabled_button: false});
+            }.bind(this)
+        });
+    }
+
+    changeText(e) {
+        var datas = jQuery.extend({}, this.state.datas);
+        datas[e.target.id] = e.target.value;
+        this.setState({datas: datas});
+    }
+
+    changeSelect(e) {
+        var datas = jQuery.extend({}, this.state.datas);
+        datas[e.target.id] = e.target.value;
+        this.setState({datas: datas});
+    }
+
+    changeSelectMultiple(e)
+    {
+        var datas = jQuery.extend({}, this.state.datas);
+        var options = e.target.options;
+        var values = [];
+        for (var i = 0, l = options.length; i < l; i++) {
+          if (options[i].selected === true) {
+            values.push(options[i].value);
           }
         }
-      ]
-    };
-  }
-
-  // @see http://stackoverflow.com/questions/12376870/create-an-array-of-characters-from-specified-range
-  range(start, stop)
-  {
-    var result=[];
-    for (var idx=start.charCodeAt(0),end=stop.charCodeAt(0); idx <=end; ++idx){
-      result.push(String.fromCharCode(idx));
+        datas[e.target.id] = values;
+        this.setState({datas: datas});
     }
-    return result;
-  }
 
-  pushLink(collection, model)
-  {
-    for (var i = 0; i < collection.length; i++) {
-      var tmp = collection[i];
-      if (tmp.source === model.source) {
-        if (tmp.target === model.target) {
-          return false;
+    changeFile(e) {
+        var datas = jQuery.extend({}, this.state.datas);
+        var id = e.target.id;
+        jQuery(e.target.parentNode).siblings("input").val(e.target.value);
+        // e.target.parentNode.nextSibling.value = e.target.value;
+        var _this = this;
+        _this.setState({datas: datas});
+
+        var fakePath = e.target.files[0];
+        var reader = new FileReader();
+        reader.onload = function(upload) {
+            var datas = jQuery.extend({}, _this.state.datas);
+            datas[id] = "filename:" + fakePath.name + ";" + upload.target.result;
+            _this.setState({datas: datas});
+        };
+        // reader.readAsText(e.target.files[0]);
+        // reader.readAsBinaryString(e.target.files[0]);
+        if (fakePath !== undefined) {
+            reader.readAsDataURL(fakePath);
         }
+    }
+
+    changeRadio(e) {
+        var datas = jQuery.extend({}, this.state.datas);
+        datas[e.target.id] = e.target.value;
+        this.setState({datas: datas});
+    }
+
+    renderTextInput(datas, disabled='') {
+        var func = this.changeText.bind(this);
+        if (jQuery.isFunction(datas.onChange) === true) {
+          func = datas.onChange;
+        }
+        datas['input'] = <input type="text" id={datas.id} name={datas.id} placeholder={datas.title} value={datas.value} disabled={disabled} onChange={func} />;
+        return this.renderIconField(datas.id, datas.label, datas.icon, datas.title, datas.tooltip, datas.input)
+    }
+
+    renderTextareaInput(datas, disabled='')
+    {
+        var rows = 5;
+        var cols = 40;
+        if (datas.hasOwnProperty('rows') === true) {
+          rows = datas.rows;
+        }
+        if (datas.hasOwnProperty('cols') === true) {
+          cols = datas.cols;
+        }
+        datas['input'] = <label className="textarea textarea-resizable">
+          <textarea
+            rows={rows}
+            cols={cols}
+            className="custom-scroll" id={datas.id} name={datas.id}
+            placeholder={datas.title}
+            disabled={disabled}
+            onChange={this.changeText.bind(this)}
+            value={datas.value}
+          />
+        </label>;
+        return this.renderIconField(datas.id, datas.label, datas.icon, datas.title, datas.tooltip, datas.input)
+    }
+
+    renderRadioInput(datas, values, disabled='') {
+        var self = this;
+        var options = values.map(function(name, value){
+        var checked = (value == datas.value) ? true : false;
+            return (
+              <label key={value} className="radio">
+              <input type="radio" id={datas.id} name={datas.id} value={value} checked={checked} onChange={self.changeRadio.bind(self)} /><i></i>{name}</label>
+            )
+        });
+        return (
+          <section>
+            <div className="row">
+              <label className="label col col-2">{datas.title}</label>
+              <div className="col col-10 inline-group">
+                {options}
+              </div>
+            </div>
+          </section>
+        )
+    }
+
+    renderSelectValue(id, label, title, values) {
+        var options = values.map(function(name, value){
+            return <option key={value} value={value} >{name}</option>
+        });
+        label = label + " " + (this.state.invalids[id] ? 'state-error' : '');
+        return (
+          <section>
+            <div className="row">
+              <label className="label col col-2">{title}</label>
+              <div className="col col-10">
+                <label className={label}>
+                  <select id={id} name={id} ref={id} onChange={this.changeSelect.bind(this)}>
+                    {options}
+                  </select>
+                  <i></i>
+                    <em className="invalids">{this.state.invalids[id]}</em>
+                </label>
+              </div>
+            </div>
+          </section>
+        )
+    }
+
+    renderPasswordInput(datas, disabled='') {
+        if ('' === datas.value) {
+          datas['input'] = <input type="password" id={datas.id} name={datas.id} placeholder={datas.title} disabled={disabled} onChange={this.changeText.bind(this)} />;
+        } else {
+          datas['input'] = <input type="password" id={datas.id} name={datas.id} placeholder={datas.title} value={datas.value} disabled={disabled} onChange={this.changeText.bind(this)} />;
+        }
+        return this.renderIconField(datas.id, datas.label, datas.icon, datas.title, datas.tooltip, datas.input)
+    }
+
+    // 古いメソッド。renderSelectFieldへ乗り換えて！
+    renderSelect(id, label, title, values) {
+        var options = values.map(function(value){
+            return <option key={value} value={value} >{trans('messages.language.'+value)}</option>
+        });
+        return (
+          <section>
+            <div className="row">
+              <label className="label col col-2">{title}</label>
+              <div className="col col-10">
+                <label className={label}>
+                  <select id={id} name={id} ref={id} onChange={this.changeSelect.bind(this)} >
+                    {options}
+                  </select>
+                  <i></i>
+                </label>
+              </div>
+            </div>
+          </section>
+        )
+    }
+
+    renderSelectField(datas, values, disabled='') {
+        var options = Object.keys(values).map(function(name, value){
+            return <option key={name} value={name} >{values[name]}</option>
+        });
+        var label = datas.label + " " + (this.state.invalids[datas.id] ? 'state-error' : '');
+        return (
+          <section>
+            <div className="row">
+              <label className="label col col-2">{datas.title}</label>
+              <div className="col col-10">
+                <label className={label}>
+                  <select id={datas.id} name={datas.id} ref={datas.id} value={datas.value} onChange={this.changeSelect.bind(this)}>
+                    {options}
+                  </select>
+                  <i></i>
+                  <em className="invalids">{this.state.invalids[datas.id]}</em>
+                </label>
+              </div>
+            </div>
+          </section>
+        )
+    }
+
+    renderSelectMultipleField(datas, values, disabled='') {
+        var options = Object.keys(values).map(function(name, value){
+            return <option key={name} value={name} >{values[name]}</option>
+        });
+        var label = datas.label + " " + (this.state.invalids[datas.id] ? 'state-error' : '');
+        return (
+          <section>
+            <div className="row">
+              <label className="label col col-2">{datas.title}</label>
+              <div className="col col-10">
+                <label className={label}>
+                  <select multiple={true} id={datas.id} name={datas.id} ref={datas.id} value={datas.value} onChange={this.changeSelectMultiple.bind(this)}>
+                    {options}
+                  </select>
+                  <i></i>
+                  <em className="invalids">{this.state.invalids[datas.id]}</em>
+                </label>
+              </div>
+            </div>
+          </section>
+        )
+    }
+
+    renderFileInput(datas, options, disabled='')
+    {
+      var self = this;
+      var label = datas.label + " " + (this.state.invalids[datas.id] ? 'state-error' : '');
+
+      return (
+        <section>
+          <div className="row">
+            <label className="label col col-2">
+              {datas.title}
+            </label>
+            <div className="col col-10">
+              <div className={label}>
+                <input type="text" placeholder={datas.tooltip} readOnly="readonly" />
+                <span className="button">
+                  <input id={datas.id} type="file" name={datas.id} onChange={self.changeFile.bind(self)} />
+                  Browse
+                </span>
+                <i></i>
+                <em className="invalids">{this.state.invalids[datas.id]}</em>
+              </div>
+            </div>
+          </div>
+        </section>
+      );
+    }
+
+    renderDatePickerInput(datas, timer, disabled='')
+    {
+      var self = this;
+      var label = datas.label + " " + (this.state.invalids[datas.id] ? 'state-error' : '');
+      var timeinput = jQuery.isPlainObject(timer) === true ? this.renderTimePickerInput(timer) : null;
+      return (
+        <section>
+          <div className="row">
+            <label className="label col col-2">
+              {datas.title}
+            </label>
+            <div className="col col-5">
+              <label className={label}>
+                  <input id={datas.id} type="text" name={datas.id} placeholder={datas.tooltip} className="form-control" data-dateformat="yyyy-mm-dd" value={datas.value} />
+              {timeinput}
+                <i></i>
+                <em className="invalids">{this.state.invalids[datas.id]}</em>
+              </label>
+            </div>
+          </div>
+        </section>
+      );
+    }
+
+    renderTimePickerInput(datas, disabled='')
+    {
+      var self = this;
+      var label = datas.label + " " + (this.state.invalids[datas.id] ? 'state-error' : '');
+      return (
+        <label className={label}>
+          <input id={datas.id} type="text" name={datas.id} placeholder={datas.tooltip} className="form-control" value={datas.value} />
+        </label>
+      );
+    }
+
+    renderLabelForDatePickerInput(datas, timer) {
+      var timeinput = jQuery.isPlainObject(timer) === true ? this.renderLabelForTimePickerInput(timer) : null;
+        return (
+          <section>
+            <div className="row">
+              <label className="label col col-2">{datas.title}</label>
+              <label className="label col col-10">{datas.value} {timeinput}</label>
+            </div>
+          </section>
+        )
+    }
+
+    renderLabelForTimePickerInput(timer) {
+        return timer.value;
+    }
+
+    renderInput(datas)
+    {
+      var type = "";
+      try {
+        type = datas.type.toLowerCase();
+      } catch (e) {
+        // noop
       }
-    }
-    if (model.source === 'S_1') {
-console.log(model);
-      collection.unshift(model);
-    } else {
-      collection.push(model);
-    }
-    return true;
-  }
+      var result = null;
 
-  draw()
-  {
-    this.graph.clear();
-    var y = 30;
-    var elementArray = [];
-    var maxWidth = 0;
-    var width = this.paper.options.width;
-    var height = this.paper.options.height;
-    // var elements = jQuery.extend({}, this.elements);
-    var elements = {};
-    var structureArray = [];
-    var linkArray = [];
-    var startOutgoing = [];
-    var endIncoming = [];
-    var tmpArray = [];
-    var tmpHash = {};
-    var runCnt = 0;
-    var uniqueArray = [];
-
-    // element
-    this.state.datas.input.plugins.forEach(function(plugin) {
-      var task = null;
-      switch(plugin.type) {
-        case 'start':
-        case 'end':
-          task = this.eNormal.clone().attr({text: {text: plugin.id + ":" + plugin.module}});
+      switch(type) {
+        case "textarea":
+          result = this.renderTextareaInput(datas, arguments[1]);
           break;
-        case 'loop_start':
-          // task = this.eIsa.clone().rotate(180).attr({text: {text: plugin.id + ":" + plugin.module}});
-          // break;
-        case 'loop_end':
-          task = this.eIsa.clone().attr({text: {text: plugin.id + ":" + plugin.module}});
+        case "radio":
+          result = this.renderRadioInput(datas, arguments[1], arguments[2]);
+          break;
+        case "select":
+          result = this.renderSelectField(datas, arguments[1], arguments[2]);
+          break;
+        case "select_multiple":
+          result = this.renderSelectMultipleField(datas, arguments[1], arguments[2]);
+          break;
+        case "date":
+          result = this.renderDatePickerInput(datas, arguments[1], arguments[2]);
+          break;
+        case "datetime":
+          result = this.renderDatePickerInput(datas, arguments[1], arguments[2]);
+          break;
+        case "password":
+          result = this.renderPasswordInput(datas, arguments[2]);
+          break;
+        case "file":
+          result = this.renderFileInput(datas, arguments[1]);
           break;
         default:
-          task = this.eEntity.clone().attr({text: {text: plugin.id + ":" + plugin.module}});
+          result = this.renderTextInput(datas, arguments[1]);
           break;
       }
-      if (maxWidth < task.attributes.size.width) {
-        maxWidth = task.attributes.size.width;
-      }
-      task.prop('properties', plugin);
-      plugin.incoming.forEach(function(id) {
-        this.pushLink(linkArray, {source: id, target: plugin.id});
-        if (id === 'S_1') {
-          startOutgoing.push(plugin.id);
-        }
-      }.bind(this));
-      plugin.outgoing.forEach(function(id) {
-        this.pushLink(linkArray, {source: plugin.id, target: id});
-        if (id === 'E_1') {
-          endIncoming.push(plugin.id);
-        }
-      }.bind(this));
-      elementArray.push(task);
-      elements[plugin.id] = task;
 
-      task.position(50, y);
-
-      this.graph.addCell([task]);
-
-      y += 100;
-    }.bind(this));
-
-    y = 30;
-
-    linkArray.sort(function(a, b) {
-      if (a.source === 'S_1' || b.source === 'S_1') {
-        return -1;
-      }
-      if (a.source === 'E_1' || b.source === 'E_1') {
-        return 1;
-      }
-      if (a.source < b.source) {
-        return -1;
-      }
-      if (a.source > b.source) {
-        return 1;
-      }
-      return 0;
-    }.bind(this));
-
-    this.elements = elements;
-
-    linkArray.forEach(function(link) {
-      if (structureArray.length === 0) {
-        structureArray[0] = [];
-        structureArray[1] = [];
-        structureArray[0][0] = link.source;
-        structureArray[1][0] = link.target;
-        tmpArray.push(link);
-        return true;
-      }
-      var hit = 0;
-      for (var x = 0; x < structureArray.length; x++) {
-        if (structureArray[x] === undefined) {
-          structureArray[x] = [];
-        }
-        if (this.checkDuplicateEntry(link, tmpArray) === true) {
-          console.log(['here0', link.source, link.target].join(":"));
-          continue;
-        }
-        var y = jQuery.inArray(link.source, structureArray[x]);
-        if (y !== -1) {
-          structureArray[x].push(link.source);
-          if (structureArray[x + 1] === undefined) {
-            structureArray[x + 1] = [];
-          }
-          structureArray[x + 1].push(link.target);
-          hit += 1;
-        } else {
-          continue;
-        }
-      }
-      if (hit === 0) {
-        if (structureArray[x] === undefined) {
-          structureArray[x] = [];
-          structureArray[x + 1] = [];
-        }
-        structureArray[x].push(link.source);
-        structureArray[x + 1].push(link.target);
-        tmpArray.push(link);
-      }
-    }.bind(this));
-
-    // uniq処理
-    for (var a = 0; a < structureArray.length; a++) {
-      uniqueArray[a] = [];
-      for (var b = 0; b < structureArray[a].length; b++) {
-        if (structureArray[a][b] === undefined) {
-          continue;
-        }
-        uniqueArray[a].push(structureArray[a][b]);
-      }
-      uniqueArray[a] = jQuery.unique(uniqueArray[a]);
+      return result;
     }
 
-    // 重複を消す
-    tmpArray = [];
-    tmpHash = {};
-    for (var a = uniqueArray.length - 1; a > -1; a--) {
-      for (var b = uniqueArray[a].length - 1; b > -1; b--) {
-        if (uniqueArray[a][b] in tmpHash === true) {
-          continue;
-        }
-        if (tmpArray[a] === undefined) {
-          tmpArray[a] = [];
-        }
-        tmpHash[uniqueArray[a][b]] = true;
-        tmpArray[a].push(uniqueArray[a][b]);
+    renderLabel(datas)
+    {
+      var type = "";
+      try {
+        type = datas.type.toLowerCase();
+      } catch (e) {
+        // noop
       }
-    }
-    // 空行を消す
-    var i = 0;
-    uniqueArray = [];
-    for (var a = 0; a < tmpArray.length; a++) {
-      if (tmpArray[a].length !== 0) {
-        uniqueArray[i] = tmpArray[a];
-        i++;
-      }
-    }
+      var result = null;
 
-    // console.log(structureArray);
-    console.log(uniqueArray);
-
-    for (var a = 0; a < uniqueArray.length; a++) {
-      var subUniqueArray = uniqueArray[a];
-      if (subUniqueArray.length === 1) {
-        var id = subUniqueArray[0];
-        var element = elements[id];
-        var x = (maxWidth - element.attributes.size.width) / 2 + (width / 4);
-        element.position(x, y);
-        // this.graph.addCell([element]);
-      } else {
-        var x = 50;
-        if (subUniqueArray.length % 2 === 0) { // 偶数
-          for (var b = 0; b < subUniqueArray.length; b++) {
-            var id = subUniqueArray[b];
-            var element = elements[id];
-            element.position(x, y);
-            x += 180;
-            // this.graph.addCell([element]);
-          }
-        } else { // 奇数
-          for (var b = 0; b < subUniqueArray.length; b++) {
-            var id = subUniqueArray[b];
-            var element = elements[id];
-            element.position(x, y);
-            x += 180;
-            // this.graph.addCell([element]);
-          }
-        }
+      switch(type) {
+        case "textarea":
+          result = this.renderLabelForTextareaInput(datas);
+          break;
+        case "radio":
+          result = this.renderLabelForRadioInput(datas);
+          break;
+        case "select":
+          result = this.renderLabelForSelect(datas);
+          break;
+        case "select_multiple":
+          result = this.renderLabelForSelectMultiple(datas);
+          break;
+        case "date":
+          result = this.renderLabelForDatePickerInput(datas);
+          break;
+        case "datetime":
+          result = this.renderLabelForDatePickerInput(datas, arguments[1]);
+          break;
+        case "password":
+          result = this.renderLabelForPasswordInput(datas);
+          break;
+        case "file":
+          result = this.renderLabelForFileInput(datas);
+          break;
+        default:
+          result = this.renderLabelForTextInput(datas);
+          break;
       }
-      y += 100;
+
+      return result;
     }
 
-    // startとendだけ別呼び出し
-    /*
-    (function() {
-      if (uniqueArray.length > 0) {
-        var element;
-        if (uniqueArray[uniqueArray.length - 1].length !== 1 || uniqueArray[uniqueArray.length - 1][0] !== 'E_1') {
-          element = this.returnElementByPluginId('E_1');
-          var a = (maxWidth - element.attributes.size.width) / 2 + (width / 4);
-          element.position(a, y);
-        }
-        if (uniqueArray[0].length !== 1 || uniqueArray[0][0] !== 'S_1') {
-          element = this.returnElementByPluginId('S_1');
-          var a = (maxWidth - element.attributes.size.width) / 2 + (width / 4);
-          element.position(a, 30);
-        }
-      }
-    }.bind(this)());
-    */
-/*
-    this.paper.scaleContentToFit({
-      scaleGrid: 0.9
-    });
-*/
-/*
-    this.paper.fitToContent({
-      padding: 10,
-      gridWidth: 0,
-      gridHeight: 0,
-      allowNewOrigin: "any"
-    });
-*/
-  }
+    renderIconField(id, label, icon, title, tooltip, field) {
+        var label = label + ' ' + (this.state.invalids[id] ? 'state-error' : '');
+        return (
+          <section>
+            <div className="row">
+              <label className="label col col-2">{title}</label>
+              <div className="col col-10">
+                {(tooltip == '' ? function() {
+                  return <label className={label}> <i className={icon}></i>
+                    {field}
+                  </label>
+                } : function() {
+                  return <label className={label}> <i className={icon}></i>
+                    {field}
+                    <b className="tooltip tooltip-bottom-right">{tooltip}</b>
+                    <em className="invalids">{this.state.invalids[id]}</em>
+                  </label>
+                }).call(this)}
+              </div>
+            </div>
+          </section>
+        )
+    }
 
-  checkDuplicateEntry(check, master)
-  {
-    var hit = 0;
-    master.forEach(function(cmp) {
-      if (
-        check.source === cmp.source &&
-        check.target === cmp.target
-      ) {
-        hit++;
+    renderLabelForTextInput(datas) {
+        return (
+          <section>
+            <div className="row">
+              <label className="label col col-2">{datas.title}</label>
+              <label className="label col col-10">{datas.value}</label>
+            </div>
+          </section>
+        )
+    }
+
+    renderLabelForTextareaInput(datas)
+    {
+        return (
+          <section>
+            <div className="row">
+              <label className="label col col-2">{datas.title}</label>
+              <label className="label col col-10">
+                <label className="textarea textarea-resizable">
+                  <textarea rows="3"
+                    className="custom-scroll"
+                    disabled="disabled"
+                    value={datas.value}
+                  >
+                  </textarea>
+                </label>
+              </label>
+            </div>
+          </section>
+        );
+    }
+
+    renderLabelForFileInput(datas) {
+        var element = document.getElementById(datas.id);
+        var val;
+
+        if (element) {
+            val = document.getElementById(datas.id).parentNode.nextSibling.value;
+        }
+
+        return (
+          <section>
+            <div className="row">
+              <label className="label col col-2">{datas.title}</label>
+              <label className="label col col-10">{val}</label>
+            </div>
+          </section>
+        )
+    }
+
+    renderLabelForPasswordInput(datas) {
+        var dummy_val = '';
+        if ('' !== datas.value && undefined !== datas.value) { dummy_val = '********'; }
+        return (
+          <section>
+            <div className="row">
+              <label className="label col col-2">{datas.title}</label>
+              <label className="label col col-10">{dummy_val}</label>
+            </div>
+          </section>
+        )
+    }
+
+    renderLabelForSelect(datas) {
+        var value =  $('#' + datas.id + ' option:selected').text();
+
+        return (
+          <section>
+            <div className="row">
+              <label className="label col col-2">{datas.title}</label>
+              <label className="label col col-10">{value}</label>
+            </div>
+          </section>
+        )
+    }
+
+    renderLabelForRadioInput(datas) {
+        var value = $("input[name='" + datas.id + "']:checked").parent().text();
+        return (
+          <section>
+            <div className="row">
+              <label className="label col col-2">{datas.title}</label>
+              <label className="label col col-10">{value}</label>
+            </div>
+          </section>
+        )
+    }
+
+    render() {
         return false;
-      } else {
-        return true;
-      }
-    });
-    if (hit === 0) {
-      return false;
-    }
-    return true;
-  }
-
-  returnIncomingItemKeys(element)
-  {
-    if (_.isObject(element) === false) {
-      return undefined;
-    }
-    var properties = element.prop('properties');
-    if (properties === undefined) {
-      return properties;
-    }
-    var incoming = properties.incoming;
-    if (incoming === undefined) {
-      return incoming;
-    }
-    if (typeof incoming === 'string') {
-      incoming = [incoming];
-    }
-    return incoming;
-  }
-
-  setPlugin(plugin)
-  {
-    var datas = this.state.datas;
-    var input = datas.input;
-    var plugins = [];
-    var hit = 0;
-
-    input.plugins.forEach(function(p) {
-      if (plugin.id !== p.id) {
-        plugins.push(p);
-      } else {
-        hit += 1;
-        plugins.push(plugin);
-      }
-    });
-    if (hit === 0) {
-      plugins.push(plugin);
-    }
-    input.plugins = plugins;
-    datas.input = input;
-    this.setState({datas: datas});
-    this.initCondition();
-  }
-
-  returnPluginByElementId(id)
-  {
-    var element = this.graph.getCell(id);
-    return this.returnPluginByElement(element);
-  }
-
-  returnPluginByElement(element)
-  {
-    if (_.isObject(element) === false) {
-      return undefined;
-    }
-    var id = element.prop('properties/id');
-    if (id == '') {
-      return undefined;
-    }
-    return this.returnPluginById(id);
-  }
-
-  returnElementByPluginId(id)
-  {
-    var hit = undefined;
-    this.graph.getElements().forEach(function(element) {
-      var cmpId = element.prop('properties/id');
-      if (id === cmpId) {
-        hit = element;
-      }
-    }.bind(this));
-    return hit;
-  }
-
-  returnPluginById(id)
-  {
-    var datas = this.state.datas;
-    var input = datas.input;
-    var ret = undefined;
-    input.plugins.forEach(function(plugin) {
-      if (plugin.id === id) {
-        ret = plugin;
-      }
-    }.bind(this));
-    return ret;
-  }
-
-  returnOutgoingItemKeys(element)
-  {
-    if (_.isObject(element) === false) {
-      return undefined;
-    }
-    var properties = element.prop('properties');
-    if (properties === undefined) {
-      return properties;
-    }
-    var outgoing = properties.outgoing;
-    if (outgoing === undefined) {
-      return outgoing;
-    }
-    if (typeof outgoing === 'string') {
-      outgoing = [outgoing];
-    }
-    return outgoing;
-  }
-
-  returnElement(key)
-  {
-    var ret = null;
-    if (key == '') {
-      return null;
-    }
-    Object.keys(this.elements).forEach(function(id) {
-      var element = this.elements[id];
-      var properties = element.prop('properties');
-      if (properties === undefined) {
-        return true;
-      }
-      if (properties.id === key) {
-        ret = element;
-        return false;
-      }
-    }.bind(this));
-    return ret;
-  }
-
-  returnShowDatas(id)
-  {
-    var url_api = this.props.url_api;
-    if (Boolean(this.state.url_api) !== false) {
-      url_api = this.state.url_api;
-    }
-    var url = url_api + "/" + id;
-
-    jQuery.ajax({
-      url: url,
-      dataType: 'json',
-      type: 'GET',
-      cache: false,
-    })
-    .done(function(data, textStatus, jqXHR) {
-      var datas = this.reconstructionData(data);
-      var ret = {input: datas};
-      this.setState({datas: ret});
-      this.initCondition();
-      this.copyDatas();
-    }.bind(this))
-    .fail(function(jqXHR, textStatus, errorThrown) {
-      console.error(status, errorThrown.toString());
-    }.bind(this))
-    ;
-  }
-
-  reconstructionData(datas)
-  {
-    var defaults = {
-      plugins: []
-    };
-    if (datas.flows === undefined) {
-      return defaults;
-    }
-    var map = {};
-    datas.flows.forEach(function(flow) {
-      map[flow.orderby] = flow.action_sub_id;
-    }.bind(this));
-
-    datas.flows.forEach(function(flow) {
-      var tmp = {};
-      var orderby = flow.orderby;
-      tmp.id = flow.action_sub_id;
-      tmp.module = flow.plugin[0].plugin_name;
-      tmp.incoming = [];
-      tmp.outgoing = [];
-
-      var outgoing1 = map[orderby + 10];
-      var outgoing2 = map[orderby + 11];
-
-      if (outgoing1 !== undefined) {
-        tmp.outgoing.push(outgoing1);
-      }
-      if (outgoing2 !== undefined) {
-        tmp.outgoing.push(outgoing2);
-      }
-
-      defaults.plugins.push(tmp);
-    }.bind(this));
-    return defaults;
-  }
-
-/*
-  returnShowDatas(id)
-  {
-    var url = this.state.url_api + "/" + id;
-    this.getCondition(id);
-  }
-*/
-
-  returnValidationRules()
-  {
-    var rules = {};
-    return rules;
-  }
-
-  componentDidMount()
-  {
-    // validation
-    var rules = this.returnValidationRules();
-    this.executeValidation(rules);
-  }
-
-  componentWillMount()
-  {
-    var user_id = "";
-    this.getPlugin();
-    this.returnShowDatas(user_id);
-  }
-
-  componentDidUpdate(prevProps, prevState)
-  {
-    if (_.isEqual(this.state.commitDatas, prevState.commitDatas) === false) {
-      this.draw();
-      this.reCreateLink();
-    }
-    if (_.isEqual(this.state.datas, prevState.datas) === false) {
-      if (typeof this.state.datas.input === 'string') {
-        var input;
-        try {
-          input = JSON.parse(this.state.datas.input);
-        } catch(e) {
-          // noop
-        }
-        this.state.datas.input = input;
-      }
-    }
-  }
-
-  reCreateLink()
-  {
-    // delete link
-    this.graph.getElements().forEach(function(element) {
-      this.graph.removeLinks(element);
-    }.bind(this));
-
-    // create link
-    Object.keys(this.elements).forEach(function(id) {
-      var tmp = this.elements[id];
-      var element = this.graph.getCell(tmp.id);
-      if (element === undefined) {
-        console.warn(tmp.id + 'is not found element.');
-        return true;
-      }
-      var properties = element.prop('properties');
-      if (properties === undefined) {
-        return true;
-      }
-      var outgoing = this.returnOutgoingItemKeys(element);
-      if (outgoing === undefined) {
-        outgoing = [];
-      }
-      var incoming = this.returnIncomingItemKeys(element);
-      if (incoming === undefined) {
-        incoming = [];
-      }
-      incoming.forEach(function(key) {
-        var source = this.returnElement(key);
-        if (source === null) {
-          return true;
-        }
-        if (this.isLink(element, source) === true) {
-          return true;
-        }
-        var link = this.createLink(source, element);
-        link.set(this.createLabel('incoming:' + properties.module));
-        this.graph.addCell([link]);
-      }.bind(this));
-      outgoing.forEach(function(key) {
-        var target = this.returnElement(key);
-        if (target === null) {
-          return true;
-        }
-        if (this.isLink(target, element) === true) {
-          return true;
-        }
-        var link = this.createLink(element, target);
-        link.set(this.createLabel('outgoing:' + properties.module));
-        this.graph.addCell([link]);
-      }.bind(this));
-    }.bind(this));
-  }
-
-  isLink(source, target)
-  {
-    var links = this.graph.getConnectedLinks(source);
-    var ret = false;
-    links.forEach(function(link) {
-      var tmpSourceId = link.prop('source/id');
-      var tmpTargetId = link.prop('target/id');
-      if (target.id === tmpTargetId) {
-        ret = true;
-      }
-      if (target.id === tmpSourceId) {
-        ret = true;
-      }
-    }.bind(this));
-    return ret;
-  }
-
-  returnConfigData(id)
-  {
-    var datasObj = {};
-    if (id === null) {
-      return datasObj;
-    }
-    this.props.fixed_values.forEach(function(element) {
-
-    }.bind(this));
-    return datasObj;
-  }
-
-  returnDirectionData(id)
-  {
-    var datasObj = {
-      incoming: {},
-      outgoing: {},
-    };
-    if (id === null) {
-      return datasObj;
-    }
-    var defaults = {};
-    var key = 'incoming';
-    defaults[key] = {
-      id: key,
-      label: 'select',
-      type: 'select',
-      icon: 'icon-prepend fa fa-user',
-      value: this.state.datas[key],
-      title: trans('messages.action.' + key),
-      tooltip: trans('messages.action.tooltip.' + key)
-    };
-    key = 'outgoing';
-    defaults[key] = {
-      id: key,
-      label: 'select',
-      type: 'select',
-      icon: 'icon-prepend fa fa-user',
-      value: this.state.datas[key],
-      title: trans('messages.action.' + key),
-      tooltip: trans('messages.action.tooltip.' + key)
-    };
-
-    var element = this.elements[id];
-
-    if (_.isObject(element) === false) {
-      console.warn('element not found.' + id);
-      return datasObj;
     }
 
-    var outgoing = this.returnOutgoingItemKeys(element);
-    if (outgoing === undefined) {
-      outgoing = [];
-    }
-    var incoming = this.returnIncomingItemKeys(element);
-    if (incoming === undefined) {
-      incoming = [];
+    renderModal(datasObj) {
     }
 
-    var i = 1;
-    outgoing.forEach(function(key) {
-      var data = _.clone(defaults.outgoing);
-      data.id = [id, data.id, i].join('-');
-      data.value = this.state.datas[data.id];
-console.warn(data.id);
-      datasObj.outgoing[data.id] = data;
-      i += 1;
-    }.bind(this));
+    executeValidation(rules) {
+        this.initializeValidatorMethod();
+        var message_templates = this.returnValidationMessageTemplates();
+        var messages = {};
+        Object.keys(rules).map(function(column) {
+            var rule_hash = rules[column];
+            var message_hash = {};
+            Object.keys(rule_hash).map(function(rule) {
+                var param = rule_hash[rule];
+                var msg = message_templates[user_language][rule];
+                msg = msg.replace(":attribute", trans('messages.core-user.' + column));
+                msg = msg.replace(":max", param);
+                message_hash[rule] = msg;
+            });
+            messages[column] = message_hash;
+        });
+        var validate_param = {
+            // Rules for form validation
+            rules : rules,
 
-    i = 1;
-    incoming.forEach(function(key) {
-      var data = _.clone(defaults.incoming);
-      data.id = [id, data.id, i].join('-');
-      data.value = this.state.datas[data.id];
-      datasObj.incoming[data.id] = data;
-      i += 1;
-    }.bind(this));
+            // Messages for form validation
+            messages : messages,
 
-    return datasObj;
-  }
+            // Do not change code below
+            errorPlacement : function(error, element) {
+                error.insertAfter(element.parent());
+            }
+        };
+
+        $("#smart-form-register").validate(validate_param);
+    }
+
+    returnValidationMessageTemplates() {
+        var message_templates = {
+            'ja' : {
+                required : ":attributeは必ず指定してください。",
+                maxlength : ":attributeは、:max文字以下でご指定ください。",
+                required_if : ":attributeは必ず指定してください。",
+                url_if : ":attributeに正しい形式をご指定ください。",
+                regex : ":attributeに正しい形式をご指定ください。",
+                email : ":attributeに正しい形式をご指定ください。",
+                equalTo : "同じ値を入れてください。",
+            },
+            'en' : {
+                required : "The :attribute field is required.",
+                maxlength : "The :attribute may not be greater than :max characters.",
+                required_if : "The :attribute field is required.",
+                url_if : "The :attribute format is invalid.",
+                regex : "The :attribute format is invalid.",
+                email : "The :attribute format is invalid.",
+                equalTo : "Please enter the same value again.",
+            },
+        };
+        return message_templates;
+    }
 
   returnDatasObject()
   {
     var datasObj = {};
-    datasObj.input = {
-      id: 'input',
-      label: 'textarea',
-      type: 'textarea',
-      rows: 2,
-      icon: 'icon-prepend fa fa-user',
-      value: this.state.datas.input,
-      title: trans('messages.action.input'),
-      tooltip: trans('messages.action.tooltip.input')
-    };
-    datasObj.graph = {
-      id: 'graph',
-      label: 'textarea',
-      type: 'textarea',
-      rows: 2,
-      icon: 'icon-prepend fa fa-user',
-      value: this.state.datas.graph,
-      title: trans('messages.action.graph'),
-      tooltip: trans('messages.action.tooltip.graph')
-    };
-    datasObj.plugin = {
-      id: 'plugin',
-      label: 'select',
-      type: 'select',
-      icon: 'icon-prepend fa fa-user',
-      value: this.state.datas.plugin,
-      title: trans('messages.action.plugin'),
-      tooltip: trans('messages.action.tooltip.plugin')
-    };
+
+    this.props.input_type.forEach(function(item) {
+      var data = {
+        id: item.id,
+        type: item.type,
+        title: trans(this.props.messages_prefix + '.form.' + item.id),
+        label: 'input',
+        icon: 'icon-prepend fa fa-user',
+        value: this.state.datas[item.id],
+        tooltip: trans(this.props.messages_prefix + '.tooltip.' + item.id)
+      };
+      if (item.type === 'select') {
+        data['label'] = item.type;
+      } else if (item.type === 'file') {
+        data['label'] = data['label'] + ' input-file';
+      } else if (item.type === 'select_multiple') {
+        data['label'] = 'select select-multiple';
+      } else if (item.type === 'textarea') {
+        delete data.icon;
+      }
+
+      var ret = jQuery.extend(item, data);
+      datasObj[item.id] = ret;
+    }.bind(this));
+
     return datasObj;
-  }
-
-  returnSubmitDatas()
-  {
-    var params = {};
-    return params;
-  }
-
-  handleConfirm(e)
-  {
-    var ret = $("#smart-form-register1").valid();
-    if (ret) {
-      $('#myModal').modal('show');
-    }
-  }
-
-  handleUpdate(e)
-  {
-  }
-
-  handleToJson(e)
-  {
-    var datas = this.state.datas;
-    datas.graph = this.graph.toJSON();
-    this.setState({datas: datas});
-  }
-
-  handleFromJson(e)
-  {
-    var datas = this.state.datas;
-    if (typeof datas.graph === 'string') {
-      this.graph.fromJSON(JSON.parse(datas.graph));
-    } else {
-      this.graph.fromJSON(datas.graph);
-    }
-// console.log(this.graph.getBBox(this.graph.getElements()));
-  }
-
-  changeSelect(e)
-  {
-    var id = e.target.id;
-    var value = e.target.value;
-    var re1 = /\-(incoming|outgoing)\-/;
-    (function() {
-      var datas = this.state.datas;
-      datas[e.target.id] = e.target.value;
-      this.setState({datas: datas});
-    }.bind(this)());
-
-    if (re1.test(id) === true) {
-      var tmpArray = id.split('-');
-      tmpArray[2] = parseInt(tmpArray[2]);
-      var datas = this.state.datas;
-      var input = datas.input;
-      input.plugins.forEach(function(plugin) {
-        if (plugin.id !== tmpArray[0]) {
-          // console.debug('"' + plugin.id + '" = "' + tmpArray[0] + '"');
-          return false;
-        }
-        plugin[tmpArray[1]][tmpArray[2] - 1] = value;
-        return true;
-      });
-      datas.input = input;
-      this.setState({datas: datas});
-    }
-  }
-
-  render()
-  {
-    var datasObj = this.returnDatasObject();
-    if (typeof datasObj.input.value !== "string") {
-      datasObj.input.value = JSON.stringify(datasObj.input.value);
-    }
-    if (typeof datasObj.graph.value !== "string") {
-      datasObj.graph.value = JSON.stringify(datasObj.graph.value);
-    }
-
-    return (
-      <div role="content" >
-        <div className="jarviswidget-editbox">
-        </div>
-        <div className="widget-body no-padding">
-          <form id="smart-form-register1" className="smart-form">
-            {this.renderRuleCondition(datasObj)}
-            {this.renderGraphCondition(datasObj)}
-            {this.renderAddPlugin(datasObj)}
-            {this.renderEditPlugin(datasObj)}
-            <footer>
-              <button type="button" className="btn btn-primary btn-lg pull-right header-btn" onClick={this.handleConfirm.bind(this)} >
-                <i className="fa fa-circle-arrow-up fa-lg"></i>
-                {trans('messages.button.create')}
-              </button>
-              <button type="button" className="btn btn-default" onClick={this.handleCancel.bind(this)} >
-                {trans('messages.button.cancel')}
-              </button>
-              <button type="button" className="btn btn-default" onClick={this.handleUpdate.bind(this)} >
-                {trans('messages.button.update')}
-              </button>
-            </footer>
-          </form>
-        </div>
-        {this.renderModal(datasObj)}
-        {this.renderModalDel(datasObj)}
-      </div>
-    );
-  }
-
-  renderEditPlugin(datasObj)
-  {
-    var configDatas = this.returnConfigData(this.state.selectId);
-    var elements = {};
-    var inputs = [];
-    var directionDatas = this.returnDirectionData(this.state.selectId);
-
-    this.graph.getElements().forEach(function(element) {
-      var id = element.prop('properties/id');
-      elements[id] = [id, element.prop('properties/module')].join(':');
-    }.bind(this));
-    elements[''] = '';
-
-    Object.keys(directionDatas.incoming).forEach(function(id) {
-      inputs.push(this.renderInput(directionDatas.incoming[id], elements));
-    }.bind(this));
-    Object.keys(directionDatas.outgoing).forEach(function(id) {
-      inputs.push(this.renderInput(directionDatas.outgoing[id], elements));
-    }.bind(this));
-
-    return (
-      <fieldset>
-        {inputs}
-      </fieldset>
-    );
-  }
-
-  renderAddPlugin(datasObj)
-  {
-    var plugins = {};
-    Object.keys(this.state.plugin).forEach(function(id) {
-      var plugin = this.state.plugin[id];
-      plugins[plugin.plugin_id] = plugin.plugin_name;
-    }.bind(this));
-
-    return (
-      <fieldset>
-        {this.renderInput(datasObj.plugin, plugins)}
-        <section>
-          <div className="row">
-            <label className="label col col-2" />
-            <div className="col col-10">
-              <button type="button" className="btn btn-sm" onClick={this.handleAddPlugin.bind(this)} >
-                {trans('messages.button.add-plugin')}
-              </button>
-            </div>
-          </div>
-        </section>
-      </fieldset>
-    );
-  }
-
-  renderRuleCondition(datasObj)
-  {
-    return (
-      <fieldset>
-        {this.renderInput(datasObj.input)}
-        <section>
-          <div className="row">
-            <label className="label col col-2" />
-            <div className="col col-10">
-              <button type="button" className="btn btn-sm" onClick={this.handleReCreateGraph.bind(this)} >
-                {trans('messages.button.recreate-graph')}
-              </button>
-            </div>
-          </div>
-        </section>
-      </fieldset>
-    );
-  }
-
-  renderGraphCondition(datasObj)
-  {
-    return (
-      <fieldset>
-        {this.renderInput(datasObj.graph)}
-        <section>
-          <div className="row">
-            <label className="label col col-2" />
-            <div className="col col-10">
-              <button type="button" className="btn btn-sm" onClick={this.handleToJson.bind(this)} >
-                {trans('messages.button.tojson')}
-              </button>
-              <i> </i>
-              <button type="button" className="btn btn-sm" onClick={this.handleFromJson.bind(this)} >
-                {trans('messages.button.fromjson')}
-              </button>
-            </div>
-          </div>
-        </section>
-      </fieldset>
-    );
-  }
-
-  renderModal(datasObj)
-  {
-    return (
-      <div className="modal fade" id="myModal" role="dialog">
-        <div className="modal-dialog">
-          <div className="modal-content">
-            <div className="modal-header">
-              <button type="button" className="close" data-dismiss="modal" aria-hidden="true">
-                &times;
-              </button>
-              <h4 className="modal-title">
-                {trans('messages.action.title-confirm-popup')}
-              </h4>
-            </div>
-            <div className="modal-body no-padding">
-              <form id="check-form" className="smart-form">
-                <fieldset>
-                  {this.renderLabel(datasObj.input)}
-                </fieldset>
-                <footer>
-                  <button type="button" className="btn btn-primary" onClick={this.handleSubmit.bind(this)} disabled={this.state.disabled_button} >
-                    {trans('messages.button.update')}
-                  </button>
-                  <button type="button" className="btn btn-default" data-dismiss="modal">
-                    {trans('messages.button.cancel')}
-                  </button>
-                </footer>
-              </form>
-            </div>
-          </div>
-        </div>
-      </div>
-    )
-  }
-
-  renderModalDel(datasObj)
-  {
-    return (
-      <div className="modal fade" id="myModalDel" role="dialog">
-        <div className="modal-dialog">
-          <div className="modal-content">
-            <div className="modal-header">
-              <button type="button" className="close" data-dismiss="modal" aria-hidden="true">
-                &times;
-              </button>
-              <h4 className="modal-title">
-               {trans('messages.action.title-confirm-popup')}
-              </h4>
-            </div>
-            <div className="modal-body no-padding">
-              <form id="check-form" className="smart-form">
-                <fieldset>
-                  {trans('messages.action.remind-delete')}
-                </fieldset>
-                <footer>
-                  <button type="button" className="btn btn-danger" onClick={this.handleDelete.bind(this)} disabled={this.state.disabled_button} >
-                    {trans('messages.button.delete')}
-                  </button>
-                  <button type="button" className="btn btn-default" data-dismiss="modal">
-                    {trans('messages.button.cancel')}
-                  </button>
-                </footer>
-              </form>
-            </div>
-          </div>
-        </div>
-      </div>
-    )
   }
 
   executeValidation(rules)
@@ -1272,190 +810,64 @@ console.warn(data.id);
     this.initializeValidatorMethod();
     var message_templates = this.returnValidationMessageTemplates();
     var messages = {};
+    var messages_prefix = this.props.messages_prefix;
+
     Object.keys(rules).map(function(column) {
       var rule_hash = rules[column];
       var message_hash = {};
       Object.keys(rule_hash).map(function(rule) {
         var param = rule_hash[rule];
         var msg = message_templates[user_language][rule];
-        msg = msg.replace(":attribute", trans('messages.action.' + column));
+        msg = msg.replace(":attribute", trans(messages_prefix + '.form.' + column));
         msg = msg.replace(":max", param);
         message_hash[rule] = msg;
       });
       messages[column] = message_hash;
     });
     var validate_param = {
-      // Rules for form validation
       rules : rules,
-      // Messages for form validation
       messages : messages,
-      // Do not change code below
       errorPlacement : function(error, element) {
         error.insertAfter(element.parent());
       }
     };
-    $("#smart-form-register1").validate(validate_param);
+    jQuery('#' + this.props.formid).validate(validate_param);
   }
 
-  getCondition(id)
-  {
-    var params = {};
-    var request;
-    params.id = id;
+    initializeValidatorMethod() {
+        jQuery.validator.addMethod("required_if", function(value, element, param) {
+            var params = param.split(',');
+            var v = $(params[0], '#smart-form-register').val()
+            if(v !== params[1]) {
+                return true;
+            }
+            // @see https://github.com/jzaefferer/jquery-validation/blob/master/src/core.js#L1148
+            if ( element.nodeName.toLowerCase() === "select" ) {
+                // could be an array for select-multiple or a string, both are fine this way
+                var val = $( element ).val();
+                return val && val.length > 0;
+            }
+            return value.length > 0;
+        }, 'required_if');
 
-    request = jQuery.ajax({
-      url: this.props.url_api_condition,
-      dataType: 'json',
-      type: 'GET',
-      cache: false,
-      data: params
-    })
-    .done(function(data) {
-      this.setState({datas: data});
-      this.initCondition();
-      this.copyDatas();
-    }.bind(this))
-    .fail(function(xhr, status, err) {
-    }.bind(this))
-    .always(function(xhr, status) {
-    }.bind(this))
-    ;
-  }
+        jQuery.validator.addMethod("url_if", function(value, element, param) {
+            var params = param.split(',');
+            var v = $(params[0], '#smart-form-register').val()
+            if(v !== params[1]) {
+                return true;
+            }
+            // @see https://github.com/jzaefferer/jquery-validation/blob/master/src/core.js#L1174
+            return /^(?:(?:(?:https?|ftp):)?\/\/)(?:\S+(?::\S*)?@)?(?:(?!(?:10|127)(?:\.\d{1,3}){3})(?!(?:169\.254|192\.168)(?:\.\d{1,3}){2})(?!172\.(?:1[6-9]|2\d|3[0-1])(?:\.\d{1,3}){2})(?:[1-9]\d?|1\d\d|2[01]\d|22[0-3])(?:\.(?:1?\d{1,2}|2[0-4]\d|25[0-5])){2}(?:\.(?:[1-9]\d?|1\d\d|2[0-4]\d|25[0-4]))|(?:(?:[a-z\u00a1-\uffff0-9]-*)*[a-z\u00a1-\uffff0-9]+)(?:\.(?:[a-z\u00a1-\uffff0-9]-*)*[a-z\u00a1-\uffff0-9]+)*(?:\.(?:[a-z\u00a1-\uffff]{2,})).?)(?::\d{2,5})?(?:[/?#]\S*)?$/i.test( value );
+        }, 'url_if');
 
-  initCondition()
-  {
-    var datas = this.state.datas;
-    var re1 = /\-(incoming|outgoing)\-/;
-    Object.keys(datas).forEach(function(key) {
-      if (re1.test(key) === true) {
-        delete datas[key];
-      }
-    }.bind(this));
-    var input = datas.input;
-    input.plugins.forEach(function(plugin) {
-      var id = plugin.id;
-
-      // incoming, outgoing
-      var incoming = [];
-      var outgoing = [];
-      var i = 1;
-      if (typeof plugin.incoming === 'string') {
-        incoming = [plugin.incoming];
-      } else if (plugin.incoming === undefined) {
-        incoming = incoming;
-      } else {
-        incoming = plugin.incoming;
-      }
-      if (typeof plugin.outgoing === 'string') {
-        outgoing = [plugin.outgoing];
-      } else if (plugin.outgoing === undefined) {
-        outgoing = outgoing;
-      } else {
-        outgoing = plugin.outgoing;
-      }
-      plugin.incoming = incoming;
-      plugin.outgoing = outgoing;
-      i = 1;
-      incoming.forEach(function(key) {
-        var tmpId = [id, 'incoming', i].join('-');
-        datas[tmpId] = key;
-        i += 1;
-      });
-      i = 1;
-      outgoing.forEach(function(key) {
-        var tmpId = [id, 'outgoing', i].join('-');
-        datas[tmpId] = key;
-        i += 1;
-      });
-    });
-    this.setState({datas: datas});
-  }
-
-  handleAddPlugin(e)
-  {
-    var datas = this.state.datas;
-    // var datas = jQuery.extend(true, {}, this.state.datas);
-    var input = datas.input;
-    if (datas.plugin === undefined) {
-      console.warn('plugin is empty.');
-      return false;
+        jQuery.validator.addMethod("regex", function(value, element, param) {
+            return value.match(param);
+        }, 'regex');
     }
-    var plugin = this.state.plugin[datas.plugin];
-    var data = {
-      module: plugin.plugin_name,
-      id: _.uniqueId(),
-      config: null,
-      incoming: [],
-      outgoing: [],
-    };
-    this.setPlugin(data);
-    this.handleReCreateGraph(new Event('click'));
-  }
-
-  setSelect(key)
-  {
-    var datas = this.state.datas;
-    if (
-      jQuery('#' + key + ' option').size() === 1 ||
-      jQuery('#' + key + ' option[value="' + datas[key] + '"]').size() === 0
-    ) {
-      datas[key] = jQuery('#' + key + ' option:first').val();
-    }
-    this.setState({datas: datas});
-  }
-
-  getPlugin()
-  {
-    var params = {};
-    var key = 'plugin';
-    var api = 'url_api_' + key;
-
-    jQuery.ajax({
-      url: this.props[api],
-      dataType: 'json',
-      type: 'GET',
-      cache: false,
-      data: params
-    })
-    .done(function(data) {
-      var state = {};
-      var ret = {};
-      data.forEach(function(plugin) {
-        ret[plugin.plugin_id] = plugin;
-      });
-      state[key] = ret;
-      this.setState(state);
-      this.setSelect(key);
-    }.bind(this))
-    .fail(function(xhr, status, err) {
-      var state = {};
-      state[key] = [];
-      this.setState(state);
-      console.error(status, err.toString());
-    }.bind(this))
-    .always(function(xhr, status) {
-    }.bind(this));
-  }
-
-  copyDatas()
-  {
-    var datas = jQuery.extend(true, {}, this.state.datas);
-    this.setState({commitDatas: datas});
-  }
-
-  handleReCreateGraph(e)
-  {
-    this.copyDatas();
-  }
 }
 
-ActionConditionForm.defaultProps = {
-  url_api_plugin: "/orion/api/v1/action/plugin",
-  url_api_condition: "/orion/api/v1/action/condition",
-  url_api: "/orion/api/v1/action",
-  url_redirect: "/orion/action",
-  fixed_values: [
-    {id: 'incoming', type: 'select'},
-    {id: 'outgoing', type: 'select'},
-  ]
+Form.propTypes = {
+    datas: React.PropTypes.array,
+    url_api: React.PropTypes.string.isRequired,
+    url_redirect: React.PropTypes.string.isRequired,
 };
