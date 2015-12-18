@@ -9,5 +9,10 @@ function trans(key)
     'messages.button.cancel': 'cancel',
     'messages.button.create': 'create',
   };
+
+  if (map.hasOwnProperty(key) === false) {
+    return key;
+  }
+
   return map[key];
 }
