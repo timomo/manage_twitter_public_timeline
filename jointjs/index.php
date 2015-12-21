@@ -65,8 +65,12 @@ $js = [
     '<script src="http://www.jointjs.com/downloads/joint.js"></script>',
 
     '<script src="trans.js?ver='. filemtime('trans.js'). '"></script>',
-    '<script src="Form.js?ver='. filemtime('Form.js'). '" type="text/jsx;harmony=true"></script>',
-    '<script src="../form.js?ver='. filemtime('../form.js'). '" type="text/jsx;harmony=true"></script>',
+#   '<script src="Form.js?ver='. filemtime('Form.js'). '" type="text/jsx;harmony=true"></script>',
+    '<script src="../AbstractBase.js?ver='. filemtime('../AbstractBase.js'). '" type="text/jsx;harmony=true"></script>',
+    '<script src="../Form.js?ver='. filemtime('../Form.js'). '" type="text/jsx;harmony=true"></script>',
+    '<script src="../ActionConditionForm.js?ver='. filemtime('../ActionConditionForm.js'). '" type="text/jsx;harmony=true"></script>',
+    '<script src="../ActionConditionFormEdit.js?ver='. filemtime('../ActionConditionFormEdit.js'). '" type="text/jsx;harmony=true"></script>',
+    '<script src="../app.js?ver='. filemtime('../app.js'). '" type="text/jsx;harmony=true"></script>',
 
 #   '<script src="app.js" type="text/babel"></script>',
 #   '<script src="Form.js?ver='. filemtime('Form.js'). '" type="text/babel"></script>',
