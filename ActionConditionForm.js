@@ -335,7 +335,7 @@ class ActionConditionForm extends Form
       }
     }
     if (model.source === 'S_1') {
-console.log(model);
+      // console.log(model);
       collection.unshift(model);
     } else {
       collection.push(model);
@@ -745,19 +745,21 @@ console.log(model);
       var tmp = {};
       var orderby = flow.orderby;
       tmp.id = flow.action_sub_id;
-      tmp.module = flow.plugin[0].plugin_name;
+      tmp.module = flow.plugin.plugin_name;
       tmp.config = flow.input;
       tmp.orderby = flow.orderby;
       tmp.incoming = [];
       tmp.outgoing = [];
+      tmp.outgoing1 = flow.outgoing.ret1;
+      tmp.outgoing2 = flow.outgoing.ret2;
 
-      var outgoing1 = map[orderby + 10];
-      var outgoing2 = map[orderby + 11];
+      var outgoing1 = flow.outgoing.ret1;
+      var outgoing2 = flow.outgoing.ret2;
 
-      if (outgoing1 !== undefined) {
+      if (outgoing1 !== null) {
         tmp.outgoing.push(outgoing1);
       }
-      if (outgoing2 !== undefined) {
+      if (outgoing2 !== null) {
         tmp.outgoing.push(outgoing2);
       }
 
@@ -812,6 +814,11 @@ console.log(model);
       this.graph.removeLinks(element);
     }.bind(this));
 
+    var outgoingKeys = [
+      'outgoing1',
+      'outgoing2'
+    ];
+
     // create link
     Object.keys(this.elements).forEach(function(id) {
       var tmp = this.elements[id];
@@ -844,8 +851,14 @@ console.log(model);
         link.set(this.createLabel('incoming:' + properties.module));
         this.graph.addCell([link]);
       }.bind(this));
-      outgoing.forEach(function(key) {
-        var target = this.returnElement(key);
+
+      outgoingKeys.forEach(function(key) {
+        var outgoingKey = element.prop('properties/' + key);
+        if (outgoingKey === null) {
+          return true;
+        }
+        var text = 'true';
+        var target = this.returnElement(outgoingKey);
         if (target === null) {
           return true;
         }
@@ -853,7 +866,10 @@ console.log(model);
           return true;
         }
         var link = this.createLink(element, target);
-        link.set(this.createLabel('outgoing:' + properties.module));
+        if (key !== 'outgoing1') {
+          text = 'false';
+        }
+        link.set(this.createLabel(text));
         this.graph.addCell([link]);
       }.bind(this));
     }.bind(this));
@@ -950,7 +966,7 @@ console.log(model);
       var data = _.clone(defaults.outgoing);
       data.id = [id, data.id, i].join('-');
       data.value = this.state.datas[data.id];
-console.warn(data.id);
+      console.warn(data.id);
       datasObj.outgoing[data.id] = data;
       i += 1;
     }.bind(this));
@@ -1002,7 +1018,7 @@ console.warn(data.id);
       title: trans('messages.action.' + key),
       tooltip: trans('messages.action.tooltip.' + key)
     };
-console.log(this.state);
+    // console.log(this.state);
     key = 'action_name';
     datasObj[key] = {
       id: key,
@@ -1069,7 +1085,7 @@ console.log(this.state);
     } else {
       this.graph.fromJSON(datas.graph);
     }
-// console.log(this.graph.getBBox(this.graph.getElements()));
+    // console.log(this.graph.getBBox(this.graph.getElements()));
   }
 
   changeSelect(e)
@@ -1165,9 +1181,9 @@ console.log(this.state);
     }.bind(this));
     elements[''] = '';
 
-console.log(configDatas);
+    // console.log(configDatas);
     Object.keys(configDatas).forEach(function(id) {
-console.log(this.renderInput(configDatas[id]));
+      // console.log(this.renderInput(configDatas[id]));
       inputs.push(this.renderInput(configDatas[id]));
     }.bind(this));
 
@@ -1372,8 +1388,8 @@ console.log(this.renderInput(configDatas[id]));
     }.bind(this));
     var input = datas.input;
 
-console.log(datas);
-console.log(input);
+    // console.log(datas);
+    // console.log(input);
 
     input.plugins.forEach(function(plugin) {
       var id = plugin.id;
