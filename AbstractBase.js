@@ -1,6 +1,5 @@
 class AbstractBase extends React.Component
 {
-<<<<<<< HEAD
     // @see https://github.com/js-cookie/js-cookie/blob/master/src/js.cookie.js
     returnCookieXSRFToken()
     {
@@ -56,7 +55,4 @@ class AbstractBase extends React.Component
         });
         return ret;
     }
-=======
-
->>>>>>> 50f0a4fd6ce3f5bdba8d173b8ca5434121b289db
 }

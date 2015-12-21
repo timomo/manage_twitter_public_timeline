@@ -3,6 +3,7 @@ class ActionConditionFormEdit extends ActionConditionForm
   returnShowDatas(id)
   {
     var params = {};
+    var key = '';
     var api = 'url_api';
 
     jQuery.ajax({
@@ -13,7 +14,6 @@ class ActionConditionFormEdit extends ActionConditionForm
       data: params
     })
     .done(function(data) {
-
       var tmp = this.reconstructionData(data);
 console.log(tmp);
       var ret = {};
@@ -23,7 +23,6 @@ console.log(tmp);
       this.setState(ret);
       this.initCondition();
       this.copyDatas();
-
     }.bind(this))
     .fail(function(xhr, status, err) {
       var state = {};
