@@ -1,3 +1,8 @@
+/**
+ * 指定文字列の多言語対応
+ * @param {String} key 文字列
+ * @returns {String} 他言語文字列
+ */
 function trans(key)
 {
   var map = {

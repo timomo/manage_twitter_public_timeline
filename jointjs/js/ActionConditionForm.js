@@ -181,7 +181,7 @@ class ActionConditionForm extends Form
 
   /**
    * オブジェクトを選択状態にするメソッド
-   * @param {cellView} cellView
+   * @param {Object} cellView Cellオブジェクト
    */
   selectId(cellView)
   {
@@ -197,6 +197,11 @@ class ActionConditionForm extends Form
     }.bind(this));
   }
 
+  /**
+   * リンクの変更
+   * @param {Object} link リンクオブジェクト
+   * @returns {void}
+   */
   changeLink(link)
   {
     if (link.isLink() === false) {
@@ -223,6 +228,12 @@ class ActionConditionForm extends Form
     }
   }
 
+  /**
+   * リンクの削除
+   * @param {Object} link リンクオブジェクト
+   * @param {String} mode 削除タイプ...source,target,both
+   * @returns {void}
+   */
   removeLink(link, mode)
   {
     if (link.isLink() === false) {
