@@ -1,3 +1,7 @@
+/**
+ * @class AbstractBase
+ * @extends React.Component
+ */
 class AbstractBase extends React.Component
 {
     // @see https://github.com/js-cookie/js-cookie/blob/master/src/js.cookie.js

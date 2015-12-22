@@ -51,7 +51,7 @@ get_smartadmin_body_header();
 </div>
 <?php
 get_smartadmin_body_footer();
-$js = [
+$jss = [
 #   '<script src="react-0.14.3.js"></script>',
 #   '<script src="react-dom-0.14.3.js"></script>',
 #   '<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-core/5.8.23/browser.min.js"></script>',
@@ -64,16 +64,16 @@ $js = [
     '<script src="http://www.jointjs.com/js/vendor/backbone/backbone-min.js"></script>',
     '<script src="http://www.jointjs.com/downloads/joint.js"></script>',
 
-    '<script src="trans.js?ver='. filemtime('trans.js'). '"></script>',
-#   '<script src="Form.js?ver='. filemtime('Form.js'). '" type="text/jsx;harmony=true"></script>',
-    '<script src="../AbstractBase.js?ver='. filemtime('../AbstractBase.js'). '" type="text/jsx;harmony=true"></script>',
-    '<script src="../Form.js?ver='. filemtime('../Form.js'). '" type="text/jsx;harmony=true"></script>',
-    '<script src="../ActionConditionForm.js?ver='. filemtime('../ActionConditionForm.js'). '" type="text/jsx;harmony=true"></script>',
-    '<script src="../ActionConditionFormEdit.js?ver='. filemtime('../ActionConditionFormEdit.js'). '" type="text/jsx;harmony=true"></script>',
-    '<script src="../app.js?ver='. filemtime('../app.js'). '" type="text/jsx;harmony=true"></script>',
+    '<script src="js/trans.js?ver='. filemtime('js/trans.js'). '"></script>',
+    '<script src="js/AbstractBase.js?ver='. filemtime('js/AbstractBase.js'). '" type="text/jsx;harmony=true"></script>',
+    '<script src="js/Form.js?ver='. filemtime('js/Form.js'). '" type="text/jsx;harmony=true"></script>',
+    '<script src="js/ActionConditionForm.js?ver='. filemtime('js/ActionConditionForm.js'). '" type="text/jsx;harmony=true"></script>',
+    '<script src="js/ActionConditionFormEdit.js?ver='. filemtime('js/ActionConditionFormEdit.js'). '" type="text/jsx;harmony=true"></script>',
+    '<script src="js/app2.js?ver='. filemtime('js/app2.js'). '" type="text/jsx;harmony=true"></script>',
 
 #   '<script src="app.js" type="text/babel"></script>',
 #   '<script src="Form.js?ver='. filemtime('Form.js'). '" type="text/babel"></script>',
 #   '<script src="ActionConditionForm.js?ver='. filemtime('ActionConditionForm.js'). '" type="text/babel"></script>',
 ];
-get_smartadmin_footer($js);
+
+get_smartadmin_footer($jss);

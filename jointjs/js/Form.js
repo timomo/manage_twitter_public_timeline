@@ -1,3 +1,7 @@
+/**
+ * @class Form
+ * @extends AbstractBase
+ */
 class Form extends AbstractBase
 {
     constructor(props) {

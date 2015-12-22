@@ -1,5 +1,13 @@
+/**
+ * @class ActionConditionForm
+ * @classdesc
+ * @extends Form
+ */
 class ActionConditionForm extends Form
 {
+  /**
+   * @constructor
+   */
   constructor(props)
   {
     super(props);
@@ -171,6 +179,10 @@ class ActionConditionForm extends Form
     this.eIsa = eIsa;
   }
 
+  /**
+   * オブジェクトを選択状態にするメソッド
+   * @param {cellView} cellView
+   */
   selectId(cellView)
   {
     var id = cellView.model.prop('properties/id');
