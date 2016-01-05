@@ -1,7 +1,3 @@
-/**
- * @class Form
- * @extends AbstractBase
- */
 class Form extends AbstractBase
 {
     constructor(props) {
@@ -22,9 +18,6 @@ class Form extends AbstractBase
     getMyId() {
         var user_id = location.pathname.replace(/\/edit$/, "").match(/\d+$/).join("");
         return user_id;
-    }
-
-    returnDatasObject() {
     }
 
     handleClose(e) {
@@ -257,6 +250,44 @@ class Form extends AbstractBase
         this.setState({datas: datas});
     }
 
+    changeSelect2Columns(fromId, toId)
+    {
+      // var datas = jQuery.extend({}, this.state.datas);
+      var datas = this.state.datas;
+      var from = jQuery("#" + fromId).get(0);
+      var to = jQuery("#" + toId).get(0);
+      var options = from.options;
+      var values = jQuery.isPlainObject(datas[to.id]) === true ? datas[to.id] : {};
+      for (var i = 0, l = options.length; i < l; i++) {
+        if (options[i].selected === true) {
+          if (values.hasOwnProperty(options[i].value) === false) {
+            values[options[i].value] = options[i].text;
+          }
+        }
+      }
+      datas[to.id] = values;
+      this.setState({datas: datas});
+    }
+
+    removeSelect2Columns(fromId, toId)
+    {
+      // var datas = jQuery.extend({}, this.state.datas);
+      var datas = this.state.datas;
+      var from = jQuery("#" + fromId).get(0);
+      var to = jQuery("#" + toId).get(0);
+      var options = from.options;
+      var values = jQuery.isPlainObject(datas[from.id]) === true ? datas[from.id] : {};
+      for (var i = 0, l = options.length; i < l; i++) {
+        if (options[i].selected === true) {
+          if (values.hasOwnProperty(options[i].value) === true) {
+            delete values[options[i].value];
+          }
+        }
+      }
+      datas[from.id] = values;
+      this.setState({datas: datas});
+    }
+
     changeFile(e) {
         var datas = jQuery.extend({}, this.state.datas);
         var id = e.target.id;
@@ -414,6 +445,53 @@ class Form extends AbstractBase
             </div>
           </section>
         )
+    }
+
+    renderSelect2ColumnsField(datas, values, disabled='')
+    {
+      var value1 = jQuery.isPlainObject(datas.value) === true ? datas.value : {};
+      var options1 = Object.keys(value1).map(function(name, value){
+        return <option key={name} value={name} >{values[name]}</option>
+      });
+      var options2 = Object.keys(values).map(function(name, value){
+        return <option key={name} value={name} >{values[name]}</option>
+      });
+      var label = datas.label + " " + (this.state.invalids[datas.id] ? 'state-error' : '');
+      return (
+        <section>
+          <div className="row">
+            <label className="label col col-2">{datas.title}</label>
+            <div className="col col-4">
+              <label className={label}>
+                <select multiple={true} id={datas.id} name={datas.id} ref={datas.id} className="custom-scroll">
+                  {options1}
+                </select>
+              </label>
+            </div>
+            <div className="col col-1">
+              <label className="">
+                <button type="button" onClick={this.changeSelect2Columns.bind(this, datas.id + '_dummy', datas.id)}>
+                  <i className="fa fa-arrow-left"> </i>
+                </button>
+                <br />
+                <br />
+                <button type="button" onClick={this.removeSelect2Columns.bind(this, datas.id, datas.id + '_dummy')}>
+                  <i className="fa fa-arrow-right"> </i>
+                </button>
+              </label>
+            </div>
+            <div className="col col-4">
+              <label className={label}>
+                <select multiple={true} id={datas.id + "_dummy"} name={datas.id + "_dummy"} className="custom-scroll">
+                  {options2}
+                </select>
+                <i></i>
+                <em className="invalids">{this.state.invalids[datas.id]}</em>
+              </label>
+            </div>
+          </div>
+        </section>
+      )
     }
 
     renderSelectMultipleField(datas, values, disabled='') {
