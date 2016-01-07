@@ -20,6 +20,18 @@ class Form extends AbstractBase
         return user_id;
     }
 
+  setSelect(key)
+  {
+    var datas = this.state.datas;
+    if (
+      jQuery('#' + key + ' option').size() === 1 ||
+      jQuery('#' + key + ' option[value="' + datas[key] + '"]').size() === 0
+    ) {
+      datas[key] = jQuery('#' + key + ' option:first').val();
+    }
+    this.setState({datas: datas});
+  }
+
     handleClose(e) {
         window.open('about:blank','_self').close();
     }
@@ -45,7 +57,9 @@ class Form extends AbstractBase
             type: 'GET',
             cache: false,
             success: function(data) {
-                this.setState({datas:data});
+                var data1 = jQuery.isPlainObject(data) === true ? data : {};
+                var datas = jQuery.extend({}, this.state.datas, data);
+                this.setState({datas:datas});
             }.bind(this),
             error: function(xhr, status, err) {
                 console.error(status, err.toString());
@@ -257,16 +271,20 @@ class Form extends AbstractBase
       var from = jQuery("#" + fromId).get(0);
       var to = jQuery("#" + toId).get(0);
       var options = from.options;
-      var values = jQuery.isPlainObject(datas[to.id]) === true ? datas[to.id] : {};
+      var values = jQuery.isArray(datas[to.id]) === true ? datas[to.id] : [];
       for (var i = 0, l = options.length; i < l; i++) {
         if (options[i].selected === true) {
-          if (values.hasOwnProperty(options[i].value) === false) {
-            values[options[i].value] = options[i].text;
+          var idx = jQuery.inArray(options[i].value, values);
+          if (idx === -1) {
+            values.push(options[i].value);
           }
         }
       }
       datas[to.id] = values;
       this.setState({datas: datas});
+      if (options.length > 0) {
+        to.selectedIndex = 0;
+      }
     }
 
     removeSelect2Columns(fromId, toId)
@@ -276,16 +294,20 @@ class Form extends AbstractBase
       var from = jQuery("#" + fromId).get(0);
       var to = jQuery("#" + toId).get(0);
       var options = from.options;
-      var values = jQuery.isPlainObject(datas[from.id]) === true ? datas[from.id] : {};
+      var values = jQuery.isArray(datas[from.id]) === true ? datas[from.id] : [];
       for (var i = 0, l = options.length; i < l; i++) {
         if (options[i].selected === true) {
-          if (values.hasOwnProperty(options[i].value) === true) {
-            delete values[options[i].value];
+          var idx = jQuery.inArray(options[i].value, values);
+          if (idx !== -1) {
+            values.splice(idx, 1);
           }
         }
       }
       datas[from.id] = values;
       this.setState({datas: datas});
+      if (options.length > 0) {
+        from.selectedIndex = 0;
+      }
     }
 
     changeFile(e) {
@@ -316,239 +338,328 @@ class Form extends AbstractBase
         this.setState({datas: datas});
     }
 
-    renderTextInput(datas, disabled='') {
-        var func = this.changeText.bind(this);
-        if (jQuery.isFunction(datas.onChange) === true) {
-          func = datas.onChange;
-        }
-        datas['input'] = <input type="text" id={datas.id} name={datas.id} placeholder={datas.title} value={datas.value} disabled={disabled} onChange={func} />;
-        return this.renderIconField(datas.id, datas.label, datas.icon, datas.title, datas.tooltip, datas.input)
+  renderSection(items, option)
+  {
+    if (jQuery.isPlainObject(option) === false) {
+      option = {section: true};
     }
-
-    renderTextareaInput(datas, disabled='')
-    {
-        var rows = 5;
-        var cols = 40;
-        if (datas.hasOwnProperty('rows') === true) {
-          rows = datas.rows;
-        }
-        if (datas.hasOwnProperty('cols') === true) {
-          cols = datas.cols;
-        }
-        datas['input'] = <label className="textarea textarea-resizable">
-          <textarea
-            rows={rows}
-            cols={cols}
-            className="custom-scroll" id={datas.id} name={datas.id}
-            placeholder={datas.title}
-            disabled={disabled}
-            onChange={this.changeText.bind(this)}
-            value={datas.value}
-          />
-        </label>;
-        return this.renderIconField(datas.id, datas.label, datas.icon, datas.title, datas.tooltip, datas.input)
-    }
-
-    renderRadioInput(datas, values, disabled='') {
-        var self = this;
-        var options = values.map(function(name, value){
-        var checked = (value == datas.value) ? true : false;
-            return (
-              <label key={value} className="radio">
-              <input type="radio" id={datas.id} name={datas.id} value={value} checked={checked} onChange={self.changeRadio.bind(self)} /><i></i>{name}</label>
-            )
-        });
-        return (
-          <section>
-            <div className="row">
-              <label className="label col col-2">{datas.title}</label>
-              <div className="col col-10 inline-group">
-                {options}
-              </div>
-            </div>
-          </section>
-        )
-    }
-
-    renderSelectValue(id, label, title, values) {
-        var options = values.map(function(name, value){
-            return <option key={value} value={value} >{name}</option>
-        });
-        label = label + " " + (this.state.invalids[id] ? 'state-error' : '');
-        return (
-          <section>
-            <div className="row">
-              <label className="label col col-2">{title}</label>
-              <div className="col col-10">
-                <label className={label}>
-                  <select id={id} name={id} ref={id} onChange={this.changeSelect.bind(this)}>
-                    {options}
-                  </select>
-                  <i></i>
-                    <em className="invalids">{this.state.invalids[id]}</em>
-                </label>
-              </div>
-            </div>
-          </section>
-        )
-    }
-
-    renderPasswordInput(datas, disabled='') {
-        if ('' === datas.value) {
-          datas['input'] = <input type="password" id={datas.id} name={datas.id} placeholder={datas.title} disabled={disabled} onChange={this.changeText.bind(this)} />;
+    var render = option.hasOwnProperty('render') === true ? option.render : 'label';
+    var cols = items.map(function(item) {
+      // ReactElementかどうかを判定
+      if (jQuery.isPlainObject(item) === true && item.hasOwnProperty('_owner') === true) {
+        return item;
+      } else {
+        if (render === 'label') {
+          return this.renderLabel(item);
         } else {
-          datas['input'] = <input type="password" id={datas.id} name={datas.id} placeholder={datas.title} value={datas.value} disabled={disabled} onChange={this.changeText.bind(this)} />;
+          return this.renderInput(item);
         }
-        return this.renderIconField(datas.id, datas.label, datas.icon, datas.title, datas.tooltip, datas.input)
-    }
+      }
+    }.bind(this));
 
-    // 古いメソッド。renderSelectFieldへ乗り換えて！
-    renderSelect(id, label, title, values) {
-        var options = values.map(function(value){
-            return <option key={value} value={value} >{trans('messages.language.'+value)}</option>
-        });
-        return (
-          <section>
-            <div className="row">
-              <label className="label col col-2">{title}</label>
-              <div className="col col-10">
-                <label className={label}>
-                  <select id={id} name={id} ref={id} onChange={this.changeSelect.bind(this)} >
-                    {options}
-                  </select>
-                  <i></i>
-                </label>
-              </div>
-            </div>
-          </section>
-        )
+    if (option.section === true) {
+      return (
+        <section>
+          <div className="row">
+            {cols}
+          </div>
+        </section>
+      );
+    } else {
+      return (
+        <div>
+          {cols}
+        </div>
+      );
     }
+  }
 
-    renderSelectField(datas, values, disabled='') {
-        var options = Object.keys(values).map(function(name, value){
-            return <option key={name} value={name} >{values[name]}</option>
-        });
-        var label = datas.label + " " + (this.state.invalids[datas.id] ? 'state-error' : '');
-        return (
-          <section>
-            <div className="row">
-              <label className="label col col-2">{datas.title}</label>
-              <div className="col col-10">
-                <label className={label}>
+  renderHiddenInput(datas, disabled, option)
+  {
+    if (disabled === undefined || disabled === null) {
+      disabled = '';
+    }
+    var tmp = jQuery.extend({}, datas);
+
+    tmp.field = <input
+                  type="hidden" id={datas.id} name={datas.id} placeholder={datas.title} value={datas.value} disabled={disabled}
+                />;
+    return tmp.field;
+    return this.renderIconFieldToDatasObject(tmp, option)
+  }
+
+  renderTextInput(datas, disabled, option)
+  {
+    if (disabled === undefined || disabled === null) {
+      disabled = '';
+    }
+    var tmp = jQuery.extend({}, datas);
+    var func = this.changeText.bind(this);
+    if (jQuery.isFunction(datas.onChange) === true) {
+      func = datas.onChange;
+    }
+    tmp.field = <input
+                  type="text" id={datas.id} name={datas.id} placeholder={datas.title} value={datas.value} disabled={disabled} onChange={func}
+                />;
+    return this.renderIconFieldToDatasObject(tmp, option)
+  }
+
+  renderTextareaInput(datas, disabled, option)
+  {
+    if (disabled === undefined || disabled === null) {
+      disabled = '';
+    }
+    var tmp = jQuery.extend({}, datas);
+    var rows = 5;
+    var cols = 40;
+    if (datas.hasOwnProperty('rows') === true) {
+      rows = datas.rows;
+    }
+    if (datas.hasOwnProperty('cols') === true) {
+      cols = datas.cols;
+    }
+    tmp.field = <label className="textarea textarea-resizable">
+      <textarea
+        rows={rows}
+        cols={cols}
+        className="custom-scroll" id={datas.id} name={datas.id}
+        placeholder={datas.title}
+        disabled={disabled}
+        onChange={this.changeText.bind(this)}
+        value={datas.value}
+      />
+    </label>;
+    return this.renderIconFieldToDatasObject(tmp, option)
+  }
+
+  renderRadioInput(datas, values, disabled, option)
+  {
+    if (disabled === undefined || disabled === null) {
+      disabled = '';
+    }
+    var tmp = jQuery.extend({}, datas);
+    var self = this;
+    var options = values.map(function(name, value) {
+      var checked = (value == datas.value) ? true : false;
+      return (
+        <label key={value} className="radio">
+          <input type="radio" id={datas.id} name={datas.id} value={value} checked={checked} onChange={self.changeRadio.bind(self)} /><i></i>{name}
+        </label>
+      )
+    });
+    return (
+      <section>
+        <div className="row">
+          <label className="label col col-2">{datas.title}</label>
+          <div className="col col-10 inline-group">
+            {options}
+          </div>
+        </div>
+      </section>
+    )
+  }
+
+  /**
+   * 古いメソッド。renderSelectFieldへ乗り換えて！
+   */
+  renderSelectValue(id, label, title, values)
+  {
+    var options = values.map(function(name, value){
+      return <option key={value} value={value} >{name}</option>
+    });
+    label = label + " " + (this.state.invalids[id] ? 'state-error' : '');
+    return (
+      <section>
+        <div className="row">
+          <label className="label col col-2">{title}</label>
+          <div className="col col-10">
+            <label className={label}>
+              <select id={id} name={id} ref={id} onChange={this.changeSelect.bind(this)}>
+                {options}
+              </select>
+              <i></i>
+              <em className="invalids">{this.state.invalids[id]}</em>
+            </label>
+          </div>
+        </div>
+      </section>
+    )
+  }
+
+  renderPasswordInput(datas, disabled, option)
+  {
+    if (disabled === undefined || disabled === null) {
+      disabled = '';
+    }
+    var tmp = jQuery.extend({}, datas);
+    if ('' === datas.value) {
+      tmp.field = <input
+                    type="password" id={datas.id} name={datas.id} placeholder={datas.title}
+                    disabled={disabled} onChange={this.changeText.bind(this)}
+                  />;
+    } else {
+      tmp.field = <input
+                    type="password" id={datas.id} name={datas.id} placeholder={datas.title} value={datas.value}
+                    disabled={disabled} onChange={this.changeText.bind(this)}
+                  />;
+    }
+    return this.renderIconFieldToDatasObject(tmp, option)
+  }
+
+  /**
+   * 古いメソッド。renderSelectFieldへ乗り換えて！
+   */
+  renderSelect(id, label, title, values)
+  {
+    var options = values.map(function(value){
+      return <option key={value} value={value} >{trans('messages.language.'+value)}</option>
+    });
+    return (
+      <section>
+        <div className="row">
+          <label className="label col col-2">{title}</label>
+          <div className="col col-10">
+            <label className={label}>
+              <select id={id} name={id} ref={id} onChange={this.changeSelect.bind(this)} >
+                {options}
+              </select>
+              <i></i>
+            </label>
+          </div>
+        </div>
+      </section>
+    )
+  }
+
+  renderSelectField(datas, values, disabled, option)
+  {
+    if (disabled === undefined || disabled === null) {
+      disabled = '';
+    }
+    var tmp = jQuery.extend({}, datas);
+    var options = Object.keys(values).map(function(name, value){
+      return <option key={name} value={name} >{values[name]}</option>
+    });
+    var label = datas.label + " " + (this.state.invalids[datas.id] ? 'state-error' : '');
+    tmp.field = <label className={label}>
                   <select id={datas.id} name={datas.id} ref={datas.id} value={datas.value} onChange={this.changeSelect.bind(this)}>
                     {options}
                   </select>
                   <i></i>
                   <em className="invalids">{this.state.invalids[datas.id]}</em>
-                </label>
-              </div>
-            </div>
-          </section>
-        )
-    }
+                </label>;
+    return this.renderIconFieldToDatasObject(tmp, option)
+  }
 
-    renderSelect2ColumnsField(datas, values, disabled='')
-    {
-      var value1 = jQuery.isPlainObject(datas.value) === true ? datas.value : {};
-      var options1 = Object.keys(value1).map(function(name, value){
-        return <option key={name} value={name} >{values[name]}</option>
-      });
-      var options2 = Object.keys(values).map(function(name, value){
-        return <option key={name} value={name} >{values[name]}</option>
-      });
-      var label = datas.label + " " + (this.state.invalids[datas.id] ? 'state-error' : '');
-      return (
-        <section>
-          <div className="row">
-            <label className="label col col-2">{datas.title}</label>
-            <div className="col col-4">
-              <label className={label}>
-                <select multiple={true} id={datas.id} name={datas.id} ref={datas.id} className="custom-scroll">
-                  {options1}
-                </select>
-              </label>
-            </div>
-            <div className="col col-1">
-              <label className="">
-                <button type="button" onClick={this.changeSelect2Columns.bind(this, datas.id + '_dummy', datas.id)}>
-                  <i className="fa fa-arrow-left"> </i>
-                </button>
-                <br />
-                <br />
-                <button type="button" onClick={this.removeSelect2Columns.bind(this, datas.id, datas.id + '_dummy')}>
-                  <i className="fa fa-arrow-right"> </i>
-                </button>
-              </label>
-            </div>
-            <div className="col col-4">
-              <label className={label}>
-                <select multiple={true} id={datas.id + "_dummy"} name={datas.id + "_dummy"} className="custom-scroll">
-                  {options2}
-                </select>
-                <i></i>
-                <em className="invalids">{this.state.invalids[datas.id]}</em>
-              </label>
-            </div>
-          </div>
-        </section>
-      )
+  renderSelect2ColumnsField(datas, values, disabled, option)
+  {
+    if (disabled === undefined || disabled === null) {
+      disabled = '';
     }
+    var tmp = jQuery.extend({}, datas);
+    var value1 = jQuery.isArray(datas.value) === true ? datas.value : [];
+    var options1 = value1.map(function(name){
+      return <option key={name} value={name}>{values[name]}</option>
+    });
+    var options2 = Object.keys(values).map(function(name, value){
+      return <option key={name} value={name}>{values[name]}</option>
+    });
+    var label = datas.label + " " + (this.state.invalids[datas.id] ? 'state-error' : '');
+    tmp.cols = [2, 4, 2, 4];
+    var field1 = <label className={label}>
+                   <select
+                     multiple={true} id={datas.id} name={datas.id} ref={datas.id} className="custom-scroll"
+                   >
+                     {options1}
+                   </select>
+                 </label>;
+    var field2 = <label className="">
+                   <button type="button"
+                     className="btn btn-default btn-sm"
+                     onClick={this.changeSelect2Columns.bind(this, datas.id + '_dummy', datas.id)}
+                   >
+                     <span>&emsp;</span>
+                     <i className="fa fa-arrow-left"> </i>
+                     <span>&emsp;</span>
+                     {trans('messages.button.add')}
+                     <span>&emsp;</span>
+                   </button>
+                   <br />
+                   <br />
+                   <button type="button"
+                     className="btn btn-default btn-sm"
+                     onClick={this.removeSelect2Columns.bind(this, datas.id, datas.id + '_dummy')}
+                   >
+                     <span>&emsp;</span>
+                     {trans('messages.button.delete')}
+                     <span>&emsp;</span>
+                     <i className="fa fa-arrow-right"> </i>
+                     <span>&emsp;</span>
+                   </button>
+                 </label>;
+    var field3 = <label className={label}>
+                   <select multiple={true} id={datas.id + "_dummy"} name={datas.id + "_dummy"} className="custom-scroll">
+                     {options2}
+                   </select>
+                   <i></i>
+                   <em className="invalids">{this.state.invalids[datas.id]}</em>
+                 </label>;
+    tmp.field = [field1, field2, field3];
+    return this.renderIconFieldToDatasObject(tmp, option)
+  }
 
-    renderSelectMultipleField(datas, values, disabled='') {
-        var options = Object.keys(values).map(function(name, value){
-            return <option key={name} value={name} >{values[name]}</option>
-        });
-        var label = datas.label + " " + (this.state.invalids[datas.id] ? 'state-error' : '');
-        return (
-          <section>
-            <div className="row">
-              <label className="label col col-2">{datas.title}</label>
-              <div className="col col-10">
-                <label className={label}>
-                  <select multiple={true} id={datas.id} name={datas.id} ref={datas.id} value={datas.value} onChange={this.changeSelectMultiple.bind(this)}>
+  renderSelectMultipleField(datas, values, disabled, option)
+  {
+    if (disabled === undefined || disabled === null) {
+      disabled = '';
+    }
+    var tmp = jQuery.extend({}, datas);
+    var options = Object.keys(values).map(function(name, value){
+      return <option key={name} value={name} >{values[name]}</option>
+    });
+    var label = datas.label + " " + (this.state.invalids[datas.id] ? 'state-error' : '');
+    tmp.field = <label className={label}>
+                  <select multiple={true} id={datas.id} name={datas.id} ref={datas.id}
+                    value={datas.value} onChange={this.changeSelectMultiple.bind(this)}
+                  >
                     {options}
                   </select>
                   <i></i>
                   <em className="invalids">{this.state.invalids[datas.id]}</em>
-                </label>
-              </div>
-            </div>
-          </section>
-        )
+                </label>;
+    return this.renderIconFieldToDatasObject(tmp, option)
+  }
+
+  renderFileInput(datas, options, disabled, option)
+  {
+    if (disabled === undefined || disabled === null) {
+      disabled = '';
     }
+    var tmp = jQuery.extend({}, datas);
+    var self = this;
+    var label = datas.label + " " + (this.state.invalids[datas.id] ? 'state-error' : '');
+    tmp.field = <div className={label}>
+                  <input type="text" placeholder={datas.tooltip} readOnly="readonly" />
+                  <span className="button">
+                    <input id={datas.id} type="file" name={datas.id} onChange={self.changeFile.bind(self)} />
+                    Browse
+                  </span>
+                  <i></i>
+                  <em className="invalids">{this.state.invalids[datas.id]}</em>
+                </div>;
+    return this.renderIconFieldToDatasObject(tmp, option)
+  }
 
-    renderFileInput(datas, options, disabled='')
-    {
-      var self = this;
-      var label = datas.label + " " + (this.state.invalids[datas.id] ? 'state-error' : '');
-
-      return (
-        <section>
-          <div className="row">
-            <label className="label col col-2">
-              {datas.title}
-            </label>
-            <div className="col col-10">
-              <div className={label}>
-                <input type="text" placeholder={datas.tooltip} readOnly="readonly" />
-                <span className="button">
-                  <input id={datas.id} type="file" name={datas.id} onChange={self.changeFile.bind(self)} />
-                  Browse
-                </span>
-                <i></i>
-                <em className="invalids">{this.state.invalids[datas.id]}</em>
-              </div>
-            </div>
-          </div>
-        </section>
-      );
+  renderDatePickerInput(datas, timer, disabled, option)
+  {
+    if (disabled === undefined || disabled === null) {
+      disabled = '';
     }
+    var tmp = jQuery.extend({}, datas);
+    var self = this;
+    var label = datas.label + " " + (this.state.invalids[datas.id] ? 'state-error' : '');
+    var timeinput = jQuery.isPlainObject(timer) === true ? this.renderTimePickerInput(timer) : null;
 
-    renderDatePickerInput(datas, timer, disabled='')
-    {
-      var self = this;
-      var label = datas.label + " " + (this.state.invalids[datas.id] ? 'state-error' : '');
-      var timeinput = jQuery.isPlainObject(timer) === true ? this.renderTimePickerInput(timer) : null;
       return (
         <section>
           <div className="row">
@@ -566,10 +677,13 @@ class Form extends AbstractBase
           </div>
         </section>
       );
-    }
+  }
 
-    renderTimePickerInput(datas, disabled='')
+    renderTimePickerInput(datas, disabled)
     {
+      if (disabled === undefined || disabled === null) {
+        disabled = '';
+      }
       var self = this;
       var label = datas.label + " " + (this.state.invalids[datas.id] ? 'state-error' : '');
       return (
@@ -591,9 +705,10 @@ class Form extends AbstractBase
         )
     }
 
-    renderLabelForTimePickerInput(timer) {
-        return timer.value;
-    }
+  renderLabelForTimePickerInput(timer)
+  {
+    return timer.value;
+  }
 
     renderInput(datas)
     {
@@ -605,33 +720,46 @@ class Form extends AbstractBase
       }
       var result = null;
 
+      var option = arguments[arguments.length - 1];
+      if (jQuery.isPlainObject(option) === false) {
+        option = {section: true};
+      } else if (option.hasOwnProperty('section') === false) {
+        option = {section: true};
+      }
+
       switch(type) {
         case "textarea":
-          result = this.renderTextareaInput(datas, arguments[1]);
+          result = this.renderTextareaInput(datas, arguments[1], option);
           break;
         case "radio":
-          result = this.renderRadioInput(datas, arguments[1], arguments[2]);
+          result = this.renderRadioInput(datas, arguments[1], arguments[2], option);
           break;
         case "select":
-          result = this.renderSelectField(datas, arguments[1], arguments[2]);
+          result = this.renderSelectField(datas, arguments[1], arguments[2], option);
           break;
         case "select_multiple":
-          result = this.renderSelectMultipleField(datas, arguments[1], arguments[2]);
+          result = this.renderSelectMultipleField(datas, arguments[1], arguments[2], option);
+          break;
+        case "select_2columns":
+          result = this.renderSelect2ColumnsField(datas, arguments[1], arguments[2], option);
           break;
         case "date":
-          result = this.renderDatePickerInput(datas, arguments[1], arguments[2]);
+          result = this.renderDatePickerInput(datas, arguments[1], arguments[2], option);
           break;
         case "datetime":
-          result = this.renderDatePickerInput(datas, arguments[1], arguments[2]);
+          result = this.renderDatePickerInput(datas, arguments[1], arguments[2], option);
           break;
         case "password":
-          result = this.renderPasswordInput(datas, arguments[2]);
+          result = this.renderPasswordInput(datas, arguments[2], option);
           break;
         case "file":
-          result = this.renderFileInput(datas, arguments[1]);
+          result = this.renderFileInput(datas, arguments[1], option);
+          break;
+        case "hidden":
+          result = this.renderHiddenInput(datas, arguments[1], option);
           break;
         default:
-          result = this.renderTextInput(datas, arguments[1]);
+          result = this.renderTextInput(datas, arguments[1], option);
           break;
       }
 
@@ -661,6 +789,9 @@ class Form extends AbstractBase
         case "select_multiple":
           result = this.renderLabelForSelectMultiple(datas);
           break;
+        case "select_2columns":
+          result = this.renderLabelForSelect2Columns(datas);
+          break;
         case "date":
           result = this.renderLabelForDatePickerInput(datas);
           break;
@@ -681,29 +812,124 @@ class Form extends AbstractBase
       return result;
     }
 
-    renderIconField(id, label, icon, title, tooltip, field) {
-        var label = label + ' ' + (this.state.invalids[id] ? 'state-error' : '');
-        return (
-          <section>
-            <div className="row">
-              <label className="label col col-2">{title}</label>
-              <div className="col col-10">
-                {(tooltip == '' ? function() {
-                  return <label className={label}> <i className={icon}></i>
-                    {field}
-                  </label>
-                } : function() {
-                  return <label className={label}> <i className={icon}></i>
-                    {field}
-                    <b className="tooltip tooltip-bottom-right">{tooltip}</b>
-                    <em className="invalids">{this.state.invalids[id]}</em>
-                  </label>
-                }).call(this)}
-              </div>
-            </div>
-          </section>
-        )
+   renderIconField(id, label, icon, title, tooltip, field) {
+       var label = label + ' ' + (this.state.invalids[id] ? 'state-error' : '');
+       return (
+         <section>
+           <div className="row">
+             <label className="label col col-2">{title}</label>
+             <div className="col col-10">
+               {(tooltip == '' ? function() {
+                 return <label className={label}> <i className={icon}></i>
+                   {field}
+                 </label>
+               } : function() {
+                 return <label className={label}> <i className={icon}></i>
+                   {field}
+                   <b className="tooltip tooltip-bottom-right">{tooltip}</b>
+                   <em className="invalids">{this.state.invalids[id]}</em>
+                 </label>
+               }).call(this)}
+             </div>
+           </div>
+         </section>
+       )
+   }
+
+  getOption(arg)
+  {
+    var option = arg[arg.length - 1];
+    if (jQuery.isPlainObject(option) === false) {
+      option = {section: true};
+    } else if (option.hasOwnProperty('section') === false) {
+      option = {section: true};
     }
+    return option;
+  }
+
+  getGridSize(datas)
+  {
+    if (datas.hasOwnProperty('cols') === true) {
+      return datas.cols;
+    }
+    return [2, 10];
+  }
+
+  getGridClassNames(datas)
+  {
+    var grid = this.getGridSize(datas);
+    var cols = [];
+    for (var i = 0; i < grid.length; i++) {
+      if (i === 0) {
+        cols.push(['label', 'col', 'col-' + grid[i]]);
+      } else {
+        cols.push(['col', 'col-' + grid[i]]);
+      }
+    }
+    return cols;
+  }
+
+  renderIconFieldToDatasObject(datas, option)
+  {
+    var id = datas.id;
+    var label = datas.label;
+    var icon = datas.icon;
+    var title = datas.title;
+    var tooltip = datas.tooltip;
+    var field = jQuery.isArray(datas.field) === true ? datas.field : [datas.field];
+    field.unshift(title);
+    var grid = this.getGridClassNames(datas);
+    var fields = [
+      <label className={grid[0].join(' ')}>{field[0]}</label>
+    ];
+
+    if (jQuery.isPlainObject(option) === false) {
+      option = {section: true};
+    }
+    label = label + ' ' + (this.state.invalids[id] ? 'state-error' : '');
+
+    for (var i = 1; i < grid.length; i++) {
+      if (i === 1) {
+        fields.push(
+          <div className={grid[i].join(' ')}>
+            {(tooltip == '' ? function() {
+              return <label className={label}> <i className={icon}></i>
+                {field[i]}
+              </label>
+            } : function() {
+              return <label className={label}> <i className={icon}></i>
+                {field[i]}
+                <b className="tooltip tooltip-bottom-right">{tooltip}</b>
+                <em className="invalids">{this.state.invalids[id]}</em>
+              </label>
+            }).call(this)}
+          </div>
+        );
+      } else {
+        fields.push(
+          <div className={grid[i].join(' ')}>
+            {field[i]}
+          </div>
+        );
+      }
+    }
+
+    if (option.hasOwnProperty('section') === true && option.section === false) {
+      return (
+        <div>
+          {fields}
+        </div>
+      );
+    } else {
+      return (
+        <section>
+          <div className="row">
+            {fields}
+          </div>
+        </section>
+      );
+    }
+  }
 
     renderLabelForTextInput(datas) {
         return (
@@ -781,6 +1007,46 @@ class Form extends AbstractBase
         )
     }
 
+    renderLabelForSelectMultiple(datas)
+    {
+      var options = {};
+      jQuery('#' + datas.id + ' option').each(function(num, option) {
+        options[option.value] = option.text;
+      });
+      var lis = datas.value.map(function(id) {
+        return <li key={id}>{options[id]}</li>;
+      }.bind(this));
+
+      return (
+        <section>
+          <div className="row">
+            <label className="label col col-2">{datas.title}</label>
+            <label className="label col col-10">{lis}</label>
+          </div>
+        </section>
+      )
+    }
+
+    renderLabelForSelect2Columns(datas)
+    {
+      var options = {};
+      jQuery('#' + datas.id + '_dummy' + ' option').each(function(num, option) {
+        options[option.value] = option.text;
+      });
+      var lis = datas.value.map(function(id) {
+        return <li key={id}>{options[id]}</li>;
+      }.bind(this));
+
+      return (
+        <section>
+          <div className="row">
+            <label className="label col col-2">{datas.title}</label>
+            <label className="label col col-10">{lis}</label>
+          </div>
+        </section>
+      )
+    }
+
     renderLabelForRadioInput(datas) {
         var value = $("input[name='" + datas.id + "']:checked").parent().text();
         return (
@@ -792,6 +1058,20 @@ class Form extends AbstractBase
           </section>
         )
     }
+
+  renderLabelForTimestamps(row)
+  {
+    return (
+      <section>
+        <div className="row">
+          <label className="label col col-2">{trans('messages.label.timestamps')}</label>
+          <label className="label col col-10">
+            {row.created_at} / {row.updated_at}
+          </label>
+        </div>
+      </section>
+    );
+  }
 
     render() {
         return false;
@@ -842,6 +1122,7 @@ class Form extends AbstractBase
                 regex : ":attributeに正しい形式をご指定ください。",
                 email : ":attributeに正しい形式をご指定ください。",
                 equalTo : "同じ値を入れてください。",
+                minlength : ":attributeは、:max以上でご指定ください。",
             },
             'en' : {
                 required : "The :attribute field is required.",
@@ -851,6 +1132,7 @@ class Form extends AbstractBase
                 regex : "The :attribute format is invalid.",
                 email : "The :attribute format is invalid.",
                 equalTo : "Please enter the same value again.",
+                minlength : "The :attribute may not be less than :max characters.",
             },
         };
         return message_templates;
@@ -859,6 +1141,11 @@ class Form extends AbstractBase
   returnDatasObject()
   {
     var datasObj = {};
+
+    if (this.props.messages_prefix === undefined) {
+      console.warn('no config messages_prefix');
+      return false;
+    }
 
     this.props.input_type.forEach(function(item) {
       var data = {
@@ -894,6 +1181,24 @@ class Form extends AbstractBase
     var messages = {};
     var messages_prefix = this.props.messages_prefix;
 
+    if (this.props.formid === undefined) {
+      console.warn('no config formid');
+    }
+
+    if (jQuery('#' + this.props.formid).size() === 0) {
+      console.warn('not found formid: ' + this.props.formid);
+    }
+
+    if (jQuery.isPlainObject(rules) === false) {
+      console.warn('not object rules');
+      return false;
+    }
+
+    if (this.props.messages_prefix === undefined) {
+      console.warn('no config messages_prefix');
+      return false;
+    }
+
     Object.keys(rules).map(function(column) {
       var rule_hash = rules[column];
       var message_hash = {};
@@ -913,7 +1218,16 @@ class Form extends AbstractBase
         error.insertAfter(element.parent());
       }
     };
+
     jQuery('#' + this.props.formid).validate(validate_param);
+  }
+
+  handleConfirm(e)
+  {
+    var ret = jQuery('#' + this.props.formid).valid();
+    if (ret) {
+      jQuery('#myModal').modal('show');
+    }
   }
 
     initializeValidatorMethod() {
