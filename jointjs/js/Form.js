@@ -266,8 +266,8 @@ class Form extends AbstractBase
 
     changeSelect2Columns(fromId, toId)
     {
-      // var datas = jQuery.extend({}, this.state.datas);
-      var datas = this.state.datas;
+      var datas = jQuery.extend(true, {}, this.state.datas);
+      // var datas = this.state.datas;
       var from = jQuery("#" + fromId).get(0);
       var to = jQuery("#" + toId).get(0);
       var options = from.options;
@@ -282,15 +282,12 @@ class Form extends AbstractBase
       }
       datas[to.id] = values;
       this.setState({datas: datas});
-      if (options.length > 0) {
-        to.selectedIndex = 0;
-      }
     }
 
     removeSelect2Columns(fromId, toId)
     {
-      // var datas = jQuery.extend({}, this.state.datas);
-      var datas = this.state.datas;
+      var datas = jQuery.extend(true, {}, this.state.datas);
+      // var datas = this.state.datas;
       var from = jQuery("#" + fromId).get(0);
       var to = jQuery("#" + toId).get(0);
       var options = from.options;
@@ -305,9 +302,6 @@ class Form extends AbstractBase
       }
       datas[from.id] = values;
       this.setState({datas: datas});
-      if (options.length > 0) {
-        from.selectedIndex = 0;
-      }
     }
 
     changeFile(e) {
@@ -379,8 +373,7 @@ class Form extends AbstractBase
     if (disabled === undefined || disabled === null) {
       disabled = '';
     }
-    var tmp = jQuery.extend({}, datas);
-
+    var tmp = jQuery.extend(true, {}, datas);
     tmp.field = <input
                   type="hidden" id={datas.id} name={datas.id} placeholder={datas.title} value={datas.value} disabled={disabled}
                 />;
@@ -393,9 +386,9 @@ class Form extends AbstractBase
     if (disabled === undefined || disabled === null) {
       disabled = '';
     }
-    var tmp = jQuery.extend({}, datas);
+    var tmp = jQuery.extend(true, {}, datas);
     var func = this.changeText.bind(this);
-    if (jQuery.isFunction(datas.onChange) === true) {
+    if (tmp.hasOwnProperty('onChange') && jQuery.isFunction(datas.onChange) === true) {
       func = datas.onChange;
     }
     tmp.field = <input
@@ -409,7 +402,7 @@ class Form extends AbstractBase
     if (disabled === undefined || disabled === null) {
       disabled = '';
     }
-    var tmp = jQuery.extend({}, datas);
+    var tmp = jQuery.extend(true, {}, datas);
     var rows = 5;
     var cols = 40;
     if (datas.hasOwnProperty('rows') === true) {
@@ -437,7 +430,7 @@ class Form extends AbstractBase
     if (disabled === undefined || disabled === null) {
       disabled = '';
     }
-    var tmp = jQuery.extend({}, datas);
+    var tmp = jQuery.extend(true, {}, datas);
     var self = this;
     var options = values.map(function(name, value) {
       var checked = (value == datas.value) ? true : false;
@@ -491,7 +484,7 @@ class Form extends AbstractBase
     if (disabled === undefined || disabled === null) {
       disabled = '';
     }
-    var tmp = jQuery.extend({}, datas);
+    var tmp = jQuery.extend(true, {}, datas);
     if ('' === datas.value) {
       tmp.field = <input
                     type="password" id={datas.id} name={datas.id} placeholder={datas.title}
@@ -536,7 +529,7 @@ class Form extends AbstractBase
     if (disabled === undefined || disabled === null) {
       disabled = '';
     }
-    var tmp = jQuery.extend({}, datas);
+    var tmp = jQuery.extend(true, {}, datas);
     var options = Object.keys(values).map(function(name, value){
       return <option key={name} value={name} >{values[name]}</option>
     });
@@ -556,7 +549,7 @@ class Form extends AbstractBase
     if (disabled === undefined || disabled === null) {
       disabled = '';
     }
-    var tmp = jQuery.extend({}, datas);
+    var tmp = jQuery.extend(true, {}, datas);
     var value1 = jQuery.isArray(datas.value) === true ? datas.value : [];
     var options1 = value1.map(function(name){
       return <option key={name} value={name}>{values[name]}</option>
@@ -613,7 +606,7 @@ class Form extends AbstractBase
     if (disabled === undefined || disabled === null) {
       disabled = '';
     }
-    var tmp = jQuery.extend({}, datas);
+    var tmp = jQuery.extend(true, {}, datas);
     var options = Object.keys(values).map(function(name, value){
       return <option key={name} value={name} >{values[name]}</option>
     });
@@ -635,7 +628,7 @@ class Form extends AbstractBase
     if (disabled === undefined || disabled === null) {
       disabled = '';
     }
-    var tmp = jQuery.extend({}, datas);
+    var tmp = jQuery.extend(true, {}, datas);
     var self = this;
     var label = datas.label + " " + (this.state.invalids[datas.id] ? 'state-error' : '');
     tmp.field = <div className={label}>
@@ -655,28 +648,22 @@ class Form extends AbstractBase
     if (disabled === undefined || disabled === null) {
       disabled = '';
     }
-    var tmp = jQuery.extend({}, datas);
+    var tmp = jQuery.extend(true, {}, datas);
     var self = this;
     var label = datas.label + " " + (this.state.invalids[datas.id] ? 'state-error' : '');
     var timeinput = jQuery.isPlainObject(timer) === true ? this.renderTimePickerInput(timer) : null;
-
-      return (
-        <section>
-          <div className="row">
-            <label className="label col col-2">
-              {datas.title}
-            </label>
-            <div className="col col-5">
-              <label className={label}>
-                  <input id={datas.id} type="text" name={datas.id} placeholder={datas.tooltip} className="form-control" data-dateformat="yyyy-mm-dd" value={datas.value} />
-              {timeinput}
-                <i></i>
-                <em className="invalids">{this.state.invalids[datas.id]}</em>
-              </label>
-            </div>
-          </div>
-        </section>
-      );
+    tmp.field = <label className={label}>
+                  <input id={datas.id} type="text" name={datas.id}
+                    placeholder={datas.tooltip} className="form-control" data-dateformat="yyyy-mm-dd" value={datas.value}
+                  />
+                  {timeinput}
+                  <i></i>
+                  <em className="invalids">{this.state.invalids[datas.id]}</em>
+                </label>;
+    if (tmp.hasOwnProperty('cols') === false) {
+      tmp.cols = [2, 5];
+    }
+    return this.renderIconFieldToDatasObject(tmp, option)
   }
 
     renderTimePickerInput(datas, disabled)
@@ -693,125 +680,133 @@ class Form extends AbstractBase
       );
     }
 
-    renderLabelForDatePickerInput(datas, timer) {
-      var timeinput = jQuery.isPlainObject(timer) === true ? this.renderLabelForTimePickerInput(timer) : null;
-        return (
-          <section>
-            <div className="row">
-              <label className="label col col-2">{datas.title}</label>
-              <label className="label col col-10">{datas.value} {timeinput}</label>
-            </div>
-          </section>
-        )
-    }
+  renderLabelForDatePickerInput(datas, timer, option)
+  {
+    var timeinput = jQuery.isPlainObject(timer) === true ? this.renderLabelForTimePickerInput(timer) : null;
+    var tmp = jQuery.extend(true, {}, datas);
+    tmp.field = <div>
+                  {datas.value} {timeinput}
+                </div>;
+    return this.renderLabelFieldToDatasObject(tmp, option);
+  }
 
   renderLabelForTimePickerInput(timer)
   {
     return timer.value;
   }
 
-    renderInput(datas)
-    {
-      var type = "";
-      try {
-        type = datas.type.toLowerCase();
-      } catch (e) {
-        // noop
-      }
-      var result = null;
+  renderInput(datas)
+  {
+    var type = "";
+    try {
+      type = datas.type.toLowerCase();
+    } catch (e) {
+      // noop
+    }
+    var result = null;
 
-      var option = arguments[arguments.length - 1];
-      if (jQuery.isPlainObject(option) === false) {
-        option = {section: true};
-      } else if (option.hasOwnProperty('section') === false) {
-        option = {section: true};
-      }
-
-      switch(type) {
-        case "textarea":
-          result = this.renderTextareaInput(datas, arguments[1], option);
-          break;
-        case "radio":
-          result = this.renderRadioInput(datas, arguments[1], arguments[2], option);
-          break;
-        case "select":
-          result = this.renderSelectField(datas, arguments[1], arguments[2], option);
-          break;
-        case "select_multiple":
-          result = this.renderSelectMultipleField(datas, arguments[1], arguments[2], option);
-          break;
-        case "select_2columns":
-          result = this.renderSelect2ColumnsField(datas, arguments[1], arguments[2], option);
-          break;
-        case "date":
-          result = this.renderDatePickerInput(datas, arguments[1], arguments[2], option);
-          break;
-        case "datetime":
-          result = this.renderDatePickerInput(datas, arguments[1], arguments[2], option);
-          break;
-        case "password":
-          result = this.renderPasswordInput(datas, arguments[2], option);
-          break;
-        case "file":
-          result = this.renderFileInput(datas, arguments[1], option);
-          break;
-        case "hidden":
-          result = this.renderHiddenInput(datas, arguments[1], option);
-          break;
-        default:
-          result = this.renderTextInput(datas, arguments[1], option);
-          break;
-      }
-
-      return result;
+    var option = arguments[arguments.length - 1];
+    if (jQuery.isPlainObject(option) === false) {
+      option = {section: true};
+    } else if (option.hasOwnProperty('section') === false) {
+      option = {section: true};
     }
 
-    renderLabel(datas)
-    {
-      var type = "";
-      try {
-        type = datas.type.toLowerCase();
-      } catch (e) {
-        // noop
-      }
-      var result = null;
-
-      switch(type) {
-        case "textarea":
-          result = this.renderLabelForTextareaInput(datas);
-          break;
-        case "radio":
-          result = this.renderLabelForRadioInput(datas);
-          break;
-        case "select":
-          result = this.renderLabelForSelect(datas);
-          break;
-        case "select_multiple":
-          result = this.renderLabelForSelectMultiple(datas);
-          break;
-        case "select_2columns":
-          result = this.renderLabelForSelect2Columns(datas);
-          break;
-        case "date":
-          result = this.renderLabelForDatePickerInput(datas);
-          break;
-        case "datetime":
-          result = this.renderLabelForDatePickerInput(datas, arguments[1]);
-          break;
-        case "password":
-          result = this.renderLabelForPasswordInput(datas);
-          break;
-        case "file":
-          result = this.renderLabelForFileInput(datas);
-          break;
-        default:
-          result = this.renderLabelForTextInput(datas);
-          break;
-      }
-
-      return result;
+    switch(type) {
+      case "textarea":
+        result = this.renderTextareaInput(datas, arguments[1], option);
+        break;
+      case "radio":
+        result = this.renderRadioInput(datas, arguments[1], arguments[2], option);
+        break;
+      case "select":
+        result = this.renderSelectField(datas, arguments[1], arguments[2], option);
+        break;
+      case "select_multiple":
+        result = this.renderSelectMultipleField(datas, arguments[1], arguments[2], option);
+        break;
+      case "select_2columns":
+        result = this.renderSelect2ColumnsField(datas, arguments[1], arguments[2], option);
+        break;
+      case "date":
+        result = this.renderDatePickerInput(datas, arguments[1], arguments[2], option);
+        break;
+      case "datetime":
+        result = this.renderDatePickerInput(datas, arguments[1], arguments[2], option);
+        break;
+      case "password":
+        result = this.renderPasswordInput(datas, arguments[2], option);
+        break;
+      case "file":
+        result = this.renderFileInput(datas, arguments[1], option);
+        break;
+      case "hidden":
+        result = this.renderHiddenInput(datas, arguments[1], option);
+        break;
+      default:
+        result = this.renderTextInput(datas, arguments[1], option);
+        break;
     }
 
+    return result;
+  }
+
+  renderLabel(datas)
+  {
+    var type = "";
+    try {
+      type = datas.type.toLowerCase();
+    } catch (e) {
+      // noop
+    }
+    var result = null;
+
+    var option = arguments[arguments.length - 1];
+    if (jQuery.isPlainObject(option) === false) {
+      option = {section: true};
+    } else if (option.hasOwnProperty('section') === false) {
+      option = {section: true};
+    }
+
+    switch(type) {
+      case "textarea":
+        result = this.renderLabelForTextareaInput(datas, option);
+        break;
+      case "radio":
+        result = this.renderLabelForRadioInput(datas, option);
+        break;
+      case "select":
+        result = this.renderLabelForSelect(datas, option);
+        break;
+      case "select_multiple":
+        result = this.renderLabelForSelectMultiple(datas, option);
+        break;
+      case "select_2columns":
+        result = this.renderLabelForSelect2Columns(datas, option);
+        break;
+      case "date":
+        result = this.renderLabelForDatePickerInput(datas, option);
+        break;
+      case "datetime":
+        result = this.renderLabelForDatePickerInput(datas, arguments[1], option);
+        break;
+      case "password":
+        result = this.renderLabelForPasswordInput(datas, option);
+        break;
+      case "file":
+        result = this.renderLabelForFileInput(datas, option);
+        break;
+      default:
+        result = this.renderLabelForTextInput(datas, option);
+        break;
+    }
+
+    return result;
+  }
+
+   /**
+    * 従来の方法: 互換性の為、そのまま残しています
+    */
    renderIconField(id, label, icon, title, tooltip, field) {
        var label = label + ' ' + (this.state.invalids[id] ? 'state-error' : '');
        return (
@@ -855,18 +850,96 @@ class Form extends AbstractBase
     return [2, 10];
   }
 
-  getGridClassNames(datas)
+  getGridClassNames(datas, render)
   {
     var grid = this.getGridSize(datas);
     var cols = [];
-    for (var i = 0; i < grid.length; i++) {
-      if (i === 0) {
-        cols.push(['label', 'col', 'col-' + grid[i]]);
-      } else {
-        cols.push(['col', 'col-' + grid[i]]);
+
+    if (render === undefined) {
+      render = 'label';
+    }
+
+    if (render === 'label') {
+      for (var i = 0; i < grid.length; i++) {
+        if (i === 0) {
+          cols.push(['label', 'col', 'col-' + grid[i]]);
+        } else {
+          cols.push(['label', 'col', 'col-' + grid[i]]);
+        }
+      }
+    } else {
+      for (var i = 0; i < grid.length; i++) {
+        if (i === 0) {
+          cols.push(['label', 'col', 'col-' + grid[i]]);
+        } else {
+          cols.push(['col', 'col-' + grid[i]]);
+        }
       }
     }
     return cols;
+  }
+
+  renderLabelFieldToDatasObject(datas, option)
+  {
+    var id = datas.id;
+    var label = datas.label;
+    var icon = datas.icon;
+    var title = datas.title;
+    var tooltip = datas.tooltip;
+    var field = jQuery.isArray(datas.field) === true ? datas.field : [datas.field];
+    field.unshift(title);
+    var grid = this.getGridClassNames(datas, 'label');
+    var fields = [
+      <label className={grid[0].join(' ')}>{field[0]}</label>
+    ];
+    icon = '';
+
+    if (jQuery.isPlainObject(option) === false) {
+      option = {section: true};
+    }
+    label = label + ' ' + (this.state.invalids[id] ? 'state-error' : '');
+
+    for (var i = 1; i < grid.length; i++) {
+      if (i === 1) {
+        fields.push(
+          <div className={grid[i].join(' ')}>
+            {(tooltip == '' ? function() {
+              return <label className={label}> <i className={icon}></i>
+                {field[i]}
+              </label>
+            } : function() {
+              return <label className={label}> <i className={icon}></i>
+                {field[i]}
+                <b className="tooltip tooltip-bottom-right">{tooltip}</b>
+                <em className="invalids">{this.state.invalids[id]}</em>
+              </label>
+            }).call(this)}
+          </div>
+        );
+      } else {
+        fields.push(
+          <div className={grid[i].join(' ')}>
+            {field[i]}
+          </div>
+        );
+      }
+    }
+
+    if (option.hasOwnProperty('section') === true && option.section === false) {
+      return (
+        <div>
+          {fields}
+        </div>
+      );
+    } else {
+      return (
+        <section>
+          <div className="row">
+            {fields}
+          </div>
+        </section>
+      );
+    }
   }
 
   renderIconFieldToDatasObject(datas, option)
@@ -878,7 +951,7 @@ class Form extends AbstractBase
     var tooltip = datas.tooltip;
     var field = jQuery.isArray(datas.field) === true ? datas.field : [datas.field];
     field.unshift(title);
-    var grid = this.getGridClassNames(datas);
+    var grid = this.getGridClassNames(datas, '');
     var fields = [
       <label className={grid[0].join(' ')}>{field[0]}</label>
     ];
@@ -931,146 +1004,105 @@ class Form extends AbstractBase
     }
   }
 
-    renderLabelForTextInput(datas) {
-        return (
-          <section>
-            <div className="row">
-              <label className="label col col-2">{datas.title}</label>
-              <label className="label col col-10">{datas.value}</label>
-            </div>
-          </section>
-        )
-    }
+  renderLabelForTextInput(datas, option)
+  {
+    var tmp = jQuery.extend(true, {}, datas);
+    tmp.field = datas.value;
+    return this.renderLabelFieldToDatasObject(tmp, option);
+  }
 
-    renderLabelForTextareaInput(datas)
-    {
-        return (
-          <section>
-            <div className="row">
-              <label className="label col col-2">{datas.title}</label>
-              <label className="label col col-10">
-                <label className="textarea textarea-resizable">
+  renderLabelForTextareaInput(datas, option)
+  {
+    var tmp = jQuery.extend(true, {}, datas);
+    tmp.field = <label className="textarea textarea-resizable">
                   <textarea rows="3"
                     className="custom-scroll"
                     disabled="disabled"
                     value={datas.value}
                   >
                   </textarea>
-                </label>
-              </label>
-            </div>
-          </section>
-        );
-    }
+                </label>;
+    return this.renderLabelFieldToDatasObject(tmp, option);
+  }
 
-    renderLabelForFileInput(datas) {
-        var element = document.getElementById(datas.id);
-        var val;
-
-        if (element) {
-            val = document.getElementById(datas.id).parentNode.nextSibling.value;
-        }
-
-        return (
-          <section>
-            <div className="row">
-              <label className="label col col-2">{datas.title}</label>
-              <label className="label col col-10">{val}</label>
-            </div>
-          </section>
-        )
-    }
-
-    renderLabelForPasswordInput(datas) {
-        var dummy_val = '';
-        if ('' !== datas.value && undefined !== datas.value) { dummy_val = '********'; }
-        return (
-          <section>
-            <div className="row">
-              <label className="label col col-2">{datas.title}</label>
-              <label className="label col col-10">{dummy_val}</label>
-            </div>
-          </section>
-        )
-    }
-
-    renderLabelForSelect(datas) {
-        var value =  $('#' + datas.id + ' option:selected').text();
-
-        return (
-          <section>
-            <div className="row">
-              <label className="label col col-2">{datas.title}</label>
-              <label className="label col col-10">{value}</label>
-            </div>
-          </section>
-        )
-    }
-
-    renderLabelForSelectMultiple(datas)
-    {
-      var options = {};
-      jQuery('#' + datas.id + ' option').each(function(num, option) {
-        options[option.value] = option.text;
-      });
-      var lis = datas.value.map(function(id) {
-        return <li key={id}>{options[id]}</li>;
-      }.bind(this));
-
-      return (
-        <section>
-          <div className="row">
-            <label className="label col col-2">{datas.title}</label>
-            <label className="label col col-10">{lis}</label>
-          </div>
-        </section>
-      )
-    }
-
-    renderLabelForSelect2Columns(datas)
-    {
-      var options = {};
-      jQuery('#' + datas.id + '_dummy' + ' option').each(function(num, option) {
-        options[option.value] = option.text;
-      });
-      var lis = datas.value.map(function(id) {
-        return <li key={id}>{options[id]}</li>;
-      }.bind(this));
-
-      return (
-        <section>
-          <div className="row">
-            <label className="label col col-2">{datas.title}</label>
-            <label className="label col col-10">{lis}</label>
-          </div>
-        </section>
-      )
-    }
-
-    renderLabelForRadioInput(datas) {
-        var value = $("input[name='" + datas.id + "']:checked").parent().text();
-        return (
-          <section>
-            <div className="row">
-              <label className="label col col-2">{datas.title}</label>
-              <label className="label col col-10">{value}</label>
-            </div>
-          </section>
-        )
-    }
-
-  renderLabelForTimestamps(row)
+  renderLabelForFileInput(datas, option)
   {
-    return (
-      <section>
-        <div className="row">
-          <label className="label col col-2">{trans('messages.label.timestamps')}</label>
-          <label className="label col col-10">
-            {row.created_at} / {row.updated_at}
-          </label>
-        </div>
-      </section>
-    );
+    var tmp = jQuery.extend(true, {}, datas);
+    var element = document.getElementById(datas.id);
+    var val;
+
+    if (element) {
+        val = document.getElementById(datas.id).parentNode.nextSibling.value;
+    }
+    tmp.field = val;
+    return this.renderLabelFieldToDatasObject(tmp, option);
+  }
+
+  renderLabelForPasswordInput(datas, option)
+  {
+    var tmp = jQuery.extend(true, {}, datas);
+    var dummy_val = '';
+    if ('' !== datas.value && undefined !== datas.value) { dummy_val = '********'; }
+    tmp.field = dummy_val;
+    return this.renderLabelFieldToDatasObject(tmp, option);
+  }
+
+  renderLabelForSelect(datas, option)
+  {
+    var tmp = jQuery.extend(true, {}, datas);
+    var value =  $('#' + datas.id + ' option:selected').text();
+    tmp.field = value;
+    tmp.label = '';
+    return this.renderLabelFieldToDatasObject(tmp, option);
+  }
+
+  renderLabelForSelectMultiple(datas, option)
+  {
+    var tmp = jQuery.extend(true, {}, datas);
+    var options = {};
+    jQuery('#' + datas.id + ' option').each(function(num, opt) {
+      options[opt.value] = opt.text;
+    });
+    var lis = datas.value.map(function(id) {
+      return <li key={id}>{options[id]}</li>;
+    }.bind(this));
+    tmp.field = [lis];
+    tmp.label = '';
+    return this.renderLabelFieldToDatasObject(tmp, option);
+  }
+
+  renderLabelForSelect2Columns(datas, option)
+  {
+    var tmp = jQuery.extend(true, {}, datas);
+    var options = {};
+    jQuery('#' + datas.id + '_dummy' + ' option').each(function(num, option) {
+      options[option.value] = option.text;
+    });
+    var lis = datas.value.map(function(id) {
+      return <li key={id}>{options[id]}</li>;
+    }.bind(this));
+    tmp.field = [lis];
+    tmp.label = '';
+    return this.renderLabelFieldToDatasObject(tmp, option);
+  }
+
+  renderLabelForRadioInput(datas, option)
+  {
+    var tmp = jQuery.extend(true, {}, datas);
+    var value = $("input[name='" + datas.id + "']:checked").parent().text();
+    tmp.field = value;
+    tmp.label = '';
+    return this.renderLabelFieldToDatasObject(tmp, option);
+  }
+
+  renderLabelForTimestamps(row, option)
+  {
+    var tmp = jQuery.extend(true, {});
+    tmp.title = trans('messages.label.timestamps');
+    tmp.field = <div>
+                  {row.created_at} / {row.updated_at}
+                </div>
+    return this.renderLabelFieldToDatasObject(tmp, option);
   }
 
     render() {
