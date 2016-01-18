@@ -1,7 +1,3 @@
-/**
- * @class AbstractBase
- * @extends React.Component
- */
 class AbstractBase extends React.Component
 {
     // @see https://github.com/js-cookie/js-cookie/blob/master/src/js.cookie.js
@@ -59,4 +55,12 @@ class AbstractBase extends React.Component
         });
         return ret;
     }
+
+  // @see http://stackoverflow.com/questions/332422/how-do-i-get-the-name-of-an-objects-type-in-javascript
+  getName()
+  {
+    var funcNameRegex = /function (.{1,})\(\)/;
+    var results = (funcNameRegex).exec((this).constructor.toString());
+    return (results && results.length > 1) ? results[1] : "";
+  }
 }

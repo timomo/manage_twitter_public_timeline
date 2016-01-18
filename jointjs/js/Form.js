@@ -50,6 +50,7 @@ class Form extends AbstractBase
           url_api = this.state.url_api;
         }
         var url = url_api + "/" + id;
+        var defer = $.Deferred();
 
         $.ajax({
             url: url,
@@ -60,11 +61,15 @@ class Form extends AbstractBase
                 var data1 = jQuery.isPlainObject(data) === true ? data : {};
                 var datas = jQuery.extend({}, this.state.datas, data);
                 this.setState({datas:datas});
+                defer.resolve(data);
             }.bind(this),
             error: function(xhr, status, err) {
                 console.error(status, err.toString());
+                defer.reject(xhr, status, err);
             }.bind(this)
         });
+
+        return defer.promise();
     }
 
     // @see https://github.com/js-cookie/js-cookie/blob/master/src/js.cookie.js
@@ -1112,38 +1117,6 @@ class Form extends AbstractBase
     renderModal(datasObj) {
     }
 
-    executeValidation(rules) {
-        this.initializeValidatorMethod();
-        var message_templates = this.returnValidationMessageTemplates();
-        var messages = {};
-        Object.keys(rules).map(function(column) {
-            var rule_hash = rules[column];
-            var message_hash = {};
-            Object.keys(rule_hash).map(function(rule) {
-                var param = rule_hash[rule];
-                var msg = message_templates[user_language][rule];
-                msg = msg.replace(":attribute", trans('messages.core-user.' + column));
-                msg = msg.replace(":max", param);
-                message_hash[rule] = msg;
-            });
-            messages[column] = message_hash;
-        });
-        var validate_param = {
-            // Rules for form validation
-            rules : rules,
-
-            // Messages for form validation
-            messages : messages,
-
-            // Do not change code below
-            errorPlacement : function(error, element) {
-                error.insertAfter(element.parent());
-            }
-        };
-
-        $("#smart-form-register").validate(validate_param);
-    }
-
     returnValidationMessageTemplates() {
         var message_templates = {
             'ja' : {
@@ -1218,7 +1191,7 @@ class Form extends AbstractBase
     }
 
     if (jQuery('#' + this.props.formid).size() === 0) {
-      console.warn('not found formid: ' + this.props.formid);
+      console.warn('not found form: ' + this.props.formid);
     }
 
     if (jQuery.isPlainObject(rules) === false) {
@@ -1250,52 +1223,56 @@ class Form extends AbstractBase
         error.insertAfter(element.parent());
       }
     };
-
     jQuery('#' + this.props.formid).validate(validate_param);
   }
 
   handleConfirm(e)
   {
     var ret = jQuery('#' + this.props.formid).valid();
+    // var ret = true;
     if (ret) {
       jQuery('#myModal').modal('show');
     }
   }
 
-    initializeValidatorMethod() {
-        jQuery.validator.addMethod("required_if", function(value, element, param) {
-            var params = param.split(',');
-            var v = $(params[0], '#smart-form-register').val()
-            if(v !== params[1]) {
-                return true;
-            }
-            // @see https://github.com/jzaefferer/jquery-validation/blob/master/src/core.js#L1148
-            if ( element.nodeName.toLowerCase() === "select" ) {
-                // could be an array for select-multiple or a string, both are fine this way
-                var val = $( element ).val();
-                return val && val.length > 0;
-            }
-            return value.length > 0;
-        }, 'required_if');
+  initializeValidatorMethod()
+  {
+    var _this = this;
+    jQuery.validator.addMethod("required_if", function(value, element, param) {
+      var params = param.split(',');
+      var v = $(params[0], '#' + _this.props.formid).val()
+      if(v !== params[1]) {
+        return true;
+      }
+      // @see https://github.com/jzaefferer/jquery-validation/blob/master/src/core.js#L1148
+      if ( element.nodeName.toLowerCase() === "select" ) {
+        // could be an array for select-multiple or a string, both are fine this way
+        var val = $( element ).val();
+        return val && val.length > 0;
+      }
+      return value.length > 0;
+    }, 'required_if');
 
-        jQuery.validator.addMethod("url_if", function(value, element, param) {
-            var params = param.split(',');
-            var v = $(params[0], '#smart-form-register').val()
-            if(v !== params[1]) {
-                return true;
-            }
-            // @see https://github.com/jzaefferer/jquery-validation/blob/master/src/core.js#L1174
-            return /^(?:(?:(?:https?|ftp):)?\/\/)(?:\S+(?::\S*)?@)?(?:(?!(?:10|127)(?:\.\d{1,3}){3})(?!(?:169\.254|192\.168)(?:\.\d{1,3}){2})(?!172\.(?:1[6-9]|2\d|3[0-1])(?:\.\d{1,3}){2})(?:[1-9]\d?|1\d\d|2[01]\d|22[0-3])(?:\.(?:1?\d{1,2}|2[0-4]\d|25[0-5])){2}(?:\.(?:[1-9]\d?|1\d\d|2[0-4]\d|25[0-4]))|(?:(?:[a-z\u00a1-\uffff0-9]-*)*[a-z\u00a1-\uffff0-9]+)(?:\.(?:[a-z\u00a1-\uffff0-9]-*)*[a-z\u00a1-\uffff0-9]+)*(?:\.(?:[a-z\u00a1-\uffff]{2,})).?)(?::\d{2,5})?(?:[/?#]\S*)?$/i.test( value );
-        }, 'url_if');
+    jQuery.validator.addMethod("url_if", function(value, element, param) {
+      var params = param.split(',');
+      var v = $(params[0], '#' + _this.props.formid).val()
+      if(v !== params[1]) {
+        return true;
+      }
+      // @see https://github.com/jzaefferer/jquery-validation/blob/master/src/core.js#L1174
+      return /^(?:(?:(?:https?|ftp):)?\/\/)(?:\S+(?::\S*)?@)?(?:(?!(?:10|127)(?:\.\d{1,3}){3})(?!(?:169\.254|192\.168)(?:\.\d{1,3}){2})(?!172\.(?:1[6-9]|2\d|3[0-1])(?:\.\d{1,3}){2})(?:[1-9]\d?|1\d\d|2[01]\d|22[0-3])(?:\.(?:1?\d{1,2}|2[0-4]\d|25[0-5])){2}(?:\.(?:[1-9]\d?|1\d\d|2[0-4]\d|25[0-4]))|(?:(?:[a-z\u00a1-\uffff0-9]-*)*[a-z\u00a1-\uffff0-9]+)(?:\.(?:[a-z\u00a1-\uffff0-9]-*)*[a-z\u00a1-\uffff0-9]+)*(?:\.(?:[a-z\u00a1-\uffff]{2,})).?)(?::\d{2,5})?(?:[/?#]\S*)?$/i.test( value );
+    }, 'url_if');
 
-        jQuery.validator.addMethod("regex", function(value, element, param) {
-            return value.match(param);
-        }, 'regex');
-    }
+    jQuery.validator.addMethod("regex", function(value, element, param) {
+      return value.match(param);
+    }, 'regex');
+  }
 }
 
 Form.propTypes = {
-    datas: React.PropTypes.array,
-    url_api: React.PropTypes.string.isRequired,
-    url_redirect: React.PropTypes.string.isRequired,
+  formid: React.PropTypes.string.isRequired,
+  datas: React.PropTypes.array,
+  input_type: React.PropTypes.array,
+  url_api: React.PropTypes.string.isRequired,
+  url_redirect: React.PropTypes.string.isRequired,
 };
