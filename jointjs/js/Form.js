@@ -255,6 +255,22 @@ class Form extends AbstractBase
         this.setState({datas: datas});
     }
 
+    changeCheckbox(e)
+    {
+      var datas = jQuery.extend(true, {}, this.state.datas);
+      var values = jQuery.isArray(datas[e.target.id]) === true ? datas[e.target.id] : [];
+      var idx = jQuery.inArray(e.target.value, values);
+      if (idx === -1) {
+        values.push(e.target.value);
+      } else {
+        if (e.target.checked === false) {
+          values.splice(idx, 1);
+        }
+      }
+      datas[e.target.id] = values;
+      this.setState({datas: datas});
+    }
+
     changeSelectMultiple(e)
     {
         var datas = jQuery.extend({}, this.state.datas);
@@ -428,6 +444,35 @@ class Form extends AbstractBase
       />
     </label>;
     return this.renderIconFieldToDatasObject(tmp, option)
+  }
+
+  renderCheckboxInput(datas, values, disabled, option)
+  {
+    if (disabled === undefined || disabled === null) {
+      disabled = '';
+    }
+    var tmp = jQuery.extend(true, {}, datas);
+    var self = this;
+    var options = Object.keys(values).map(function(value) {
+      var name = values[value];
+      var checked = jQuery.inArray(value, datas.value) !== -1 ? true : false;
+      return (
+        <label key={value} className="checkbox">
+          <input type="checkbox" id={datas.id} name={datas.id} value={value} checked={checked} onChange={self.changeCheckbox.bind(self)} />
+          <i></i>{name}
+        </label>
+      )
+    });
+    return (
+      <section>
+        <div className="row">
+          <label className="label col col-2">{datas.title}</label>
+          <div className="col col-10 inline-group">
+            {options}
+          </div>
+        </div>
+      </section>
+    )
   }
 
   renderRadioInput(datas, values, disabled, option)
@@ -723,6 +768,9 @@ class Form extends AbstractBase
         break;
       case "radio":
         result = this.renderRadioInput(datas, arguments[1], arguments[2], option);
+        break;
+      case "checkbox":
+        result = this.renderCheckboxInput(datas, arguments[1], arguments[2], option);
         break;
       case "select":
         result = this.renderSelectField(datas, arguments[1], arguments[2], option);
