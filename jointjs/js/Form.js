@@ -59,7 +59,7 @@ class Form extends AbstractBase
             cache: false,
             success: function(data) {
                 var data1 = jQuery.isPlainObject(data) === true ? data : {};
-                var datas = jQuery.extend({}, this.state.datas, data);
+                var datas = jQuery.extend(true, {}, this.state.datas, data);
                 this.setState({datas:datas});
                 defer.resolve(data);
             }.bind(this),
