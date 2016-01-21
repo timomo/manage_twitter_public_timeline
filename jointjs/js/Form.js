@@ -1,8 +1,129 @@
 class Form extends AbstractBase
 {
-    constructor(props) {
-        super(props);
+  constructor(props)
+  {
+    super(props);
+  }
+
+  isCreateForm()
+  {
+    var className = this.getName();
+    var regex = /Edit/;
+    if (regex.exec(className) === null) {
+      return true;
     }
+    return false;
+  }
+
+  renderModalSet(datasObj)
+  {
+    var isCreate = this.isCreateForm();
+    var ret = [];
+    if (isCreate === true) {
+      if (this.canCreate() === true) {
+        ret.push(this.renderModal(datasObj));
+      }
+    } else {
+      if (this.canEdit() === true) {
+        ret.push(this.renderModal(datasObj));
+      }
+      if (this.canDestroy() === true) {
+        ret.push(this.renderModalDel(datasObj));
+      }
+    }
+    return ret;
+  }
+
+  renderSubmitButton()
+  {
+    var isCreate = this.isCreateForm();
+    var ret = [];
+    if (isCreate === true) {
+      if (this.canCreate() === true) {
+        ret.push(
+          <button type="button"
+            className="btn btn-primary btn-lg pull-right header-btn"
+            disabled={this.state.disabled_button}
+            onClick={this.handleConfirm.bind(this)}
+          >
+            <i className="fa fa-circle-arrow-up fa-lg"></i>
+            {trans('messages.button.create')}
+          </button>
+        );
+      }
+    } else {
+      var display_edit = this.canEdit() ? "show" : "none";
+      var display_destroy = this.canDestroy() ? "show" : "none";
+      if (this.canEdit() === true) {
+        ret.push(
+          <button type="button"
+            className="btn btn-primary btn-lg pull-right header-btn"
+            onClick={this.handleConfirm.bind(this)}
+          >
+            <i className="fa fa-circle-arrow-up fa-lg"></i>
+            {trans('messages.button.update')}
+          </button>
+        );
+      }
+      if (this.canDestroy() === true) {
+        ret.push(
+          <a
+            data-toggle="modal"
+            href="#myModalDel"
+            className="btn btn-danger btn-lg pull-left header-btn"
+          >
+            <i className="fa fa-circle-arrow-up fa-lg"></i>
+            {trans('messages.button.delete')}
+          </a>
+        );
+      }
+    }
+    ret.push(
+      <button type="button" className="btn btn-default" onClick={this.handleCancel.bind(this)} >
+        {trans('messages.button.cancel')}
+      </button>
+    );
+    return ret;
+  }
+
+  renderModalSubmitButton()
+  {
+    var isCreate = this.isCreateForm();
+    var ret = [];
+    if (isCreate === true) {
+      if (this.canCreate() === true) {
+        ret.push(
+          <button type="button"
+            className="btn btn-primary"
+            disabled={this.state.disabled_button}
+            onClick={this.handleSubmit.bind(this)}
+          >
+            {trans('messages.button.create')}
+          </button>
+        );
+      }
+    } else {
+      var display_edit = this.canEdit() ? "show" : "none";
+      var display_destroy = this.canDestroy() ? "show" : "none";
+      if (this.canEdit() === true) {
+        ret.push(
+          <button type="button"
+            className="btn btn-primary"
+            disabled={this.state.disabled_button}
+            onClick={this.handleSubmit.bind(this)}
+          >
+            {trans('messages.button.update')}
+          </button>
+        );
+      }
+    }
+    ret.push(
+      <button type="button" className="btn btn-default" data-dismiss="modal">
+        {trans('messages.button.cancel')}
+      </button>
+    );
+    return ret;
+  }
 
     getParameters() {
         var arg = new Object;
@@ -585,7 +706,9 @@ class Form extends AbstractBase
     });
     var label = datas.label + " " + (this.state.invalids[datas.id] ? 'state-error' : '');
     tmp.field = <label className={label}>
-                  <select id={datas.id} name={datas.id} ref={datas.id} value={datas.value} onChange={this.changeSelect.bind(this)}>
+                  <select id={datas.id} name={datas.id} ref={datas.id} value={datas.value} onChange={this.changeSelect.bind(this)}
+                    className="select2"
+                  >
                     {options}
                   </select>
                   <i></i>
@@ -611,7 +734,7 @@ class Form extends AbstractBase
     tmp.cols = [2, 4, 2, 4];
     var field1 = <label className={label}>
                    <select
-                     multiple={true} id={datas.id} name={datas.id} ref={datas.id} className="custom-scroll"
+                     multiple={true} id={datas.id} name={datas.id} ref={datas.id} className="custom-scroll select2"
                    >
                      {options1}
                    </select>
@@ -641,7 +764,8 @@ class Form extends AbstractBase
                    </button>
                  </label>;
     var field3 = <label className={label}>
-                   <select multiple={true} id={datas.id + "_dummy"} name={datas.id + "_dummy"} className="custom-scroll">
+                   <select multiple={true} id={datas.id + "_dummy"} name={datas.id + "_dummy"} className="custom-scroll select2"
+                   >
                      {options2}
                    </select>
                    <i></i>
@@ -664,6 +788,7 @@ class Form extends AbstractBase
     tmp.field = <label className={label}>
                   <select multiple={true} id={datas.id} name={datas.id} ref={datas.id}
                     value={datas.value} onChange={this.changeSelectMultiple.bind(this)}
+                    className="select2"
                   >
                     {options}
                   </select>
@@ -1164,6 +1289,41 @@ class Form extends AbstractBase
 
     renderModal(datasObj) {
     }
+
+  renderModalDel(datasObj)
+  {
+    return (
+      <div className="modal fade" id="myModalDel" role="dialog">
+        <div className="modal-dialog">
+          <div className="modal-content">
+            <div className="modal-header">
+              <button type="button" className="close" data-dismiss="modal" aria-hidden="true">
+                &times;
+              </button>
+              <h4 className="modal-title">
+                {trans(this.props.messages_prefix + '.title-confirm-popup')}
+              </h4>
+            </div>
+            <div className="modal-body no-padding">
+              <form id="check-form" className="smart-form">
+                <fieldset>
+                  {trans(this.props.messages_prefix + '.remind-delete')}
+                </fieldset>
+                <footer>
+                  <button type="button" className="btn btn-danger" onClick={this.handleDelete.bind(this)} disabled={this.state.disabled_button} >
+                    {trans('messages.button.delete')}
+                  </button>
+                  <button type="button" className="btn btn-default" data-dismiss="modal">
+                    {trans('messages.button.cancel')}
+                  </button>
+                </footer>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
     returnValidationMessageTemplates() {
         var message_templates = {
