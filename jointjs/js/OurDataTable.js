@@ -5,14 +5,15 @@ class OurDataTableHeader extends AbstractBase
     }
 }
 
-
 class OurDataTableBody extends AbstractBase
 {
-    constructor(props) {
-        this.state = {
-            data: props.data,
-        };
-    }
+  constructor(props)
+  {
+    super(props);
+    this.state = {
+      data: props.data,
+    };
+  }
 
     componentWillReceiveProps(nextProps) {
         this.setState({data: nextProps.data});

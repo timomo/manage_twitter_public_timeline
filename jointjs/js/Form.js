@@ -15,6 +15,16 @@ class Form extends AbstractBase
     return false;
   }
 
+  renderEditSection()
+  {
+    var isCreate = this.isCreateForm();
+    if (isCreate === true) {
+      return;
+    } else {
+      return this.renderLabelForTimestamps(this.state.datas, {});
+    }
+  }
+
   renderModalSet(datasObj)
   {
     var isCreate = this.isCreateForm();
@@ -52,8 +62,6 @@ class Form extends AbstractBase
         );
       }
     } else {
-      var display_edit = this.canEdit() ? "show" : "none";
-      var display_destroy = this.canDestroy() ? "show" : "none";
       if (this.canEdit() === true) {
         ret.push(
           <button type="button"
@@ -103,14 +111,12 @@ class Form extends AbstractBase
         );
       }
     } else {
-      var display_edit = this.canEdit() ? "show" : "none";
-      var display_destroy = this.canDestroy() ? "show" : "none";
       if (this.canEdit() === true) {
         ret.push(
           <button type="button"
             className="btn btn-primary"
             disabled={this.state.disabled_button}
-            onClick={this.handleSubmit.bind(this)}
+            onClick={this.handleUpdate.bind(this)}
           >
             {trans('messages.button.update')}
           </button>
@@ -260,20 +266,23 @@ class Form extends AbstractBase
         });
     }
 
-    handleUpdate(e) {
-        var params = this.returnSubmitDatas();
-        this.setState({disabled_button: true});
-        var token = this.returnCookieXSRFToken();
+  handleUpdate(e)
+  {
+    var params = this.returnSubmitDatas();
+    this.setState({disabled_button: true});
+    var token = this.returnCookieXSRFToken();
 
-        var url_api = this.props.url_api;
-        if (Boolean(this.state.url_api) !== false) {
-          url_api = this.state.url_api;
-        }
-        var url_redirect = this.props.url_redirect;
-        if (Boolean(this.state.url_redirect) !== false) {
-          url_redirect = this.state.url_redirect;
-        }
-        var url = url_api + "/" + this.getMyId();
+    var url_api = this.props.url_api;
+    if (Boolean(this.state.url_api) !== false) {
+      url_api = this.state.url_api;
+    }
+    var url_redirect = this.props.url_redirect;
+    if (Boolean(this.state.url_redirect) !== false) {
+      url_redirect = this.state.url_redirect;
+    }
+    var url = url_api + "/" + this.getMyId();
+
+    // TODO: コード整形
 
         $.ajax({
             url: url,
@@ -370,11 +379,12 @@ class Form extends AbstractBase
         this.setState({datas: datas});
     }
 
-    changeSelect(e) {
-        var datas = jQuery.extend({}, this.state.datas);
-        datas[e.target.id] = e.target.value;
-        this.setState({datas: datas});
-    }
+  changeSelect(e)
+  {
+    var datas = jQuery.extend({}, this.state.datas);
+    datas[e.target.id] = e.target.value;
+    this.setState({datas: datas});
+  }
 
     changeCheckbox(e)
     {
@@ -974,6 +984,9 @@ class Form extends AbstractBase
       case "file":
         result = this.renderLabelForFileInput(datas, option);
         break;
+      case "hidden":
+        result = undefined;
+        break;
       default:
         result = this.renderLabelForTextInput(datas, option);
         break;
@@ -1057,6 +1070,18 @@ class Form extends AbstractBase
     return cols;
   }
 
+  isRequiredField(id)
+  {
+    var rules = this.returnValidationRules();
+    var required = false;
+    if (rules.hasOwnProperty(id) === true) {
+      if (rules[id].hasOwnProperty('required') === true) {
+        return rules[id].required;
+      }
+    }
+    return required;
+  }
+
   renderLabelFieldToDatasObject(datas, option)
   {
     var id = datas.id;
@@ -1067,8 +1092,10 @@ class Form extends AbstractBase
     var field = jQuery.isArray(datas.field) === true ? datas.field : [datas.field];
     field.unshift(title);
     var grid = this.getGridClassNames(datas, 'label');
+    var requiredSpan = this.isRequiredField(id) === true ? <code>*</code> : <code></code>; 
+
     var fields = [
-      <label className={grid[0].join(' ')}>{field[0]}</label>
+      <label className={grid[0].join(' ')}>{field[0]} {requiredSpan}</label>
     ];
     icon = '';
 
@@ -1082,11 +1109,13 @@ class Form extends AbstractBase
         fields.push(
           <div className={grid[i].join(' ')}>
             {(tooltip == '' ? function() {
-              return <label className={label}> <i className={icon}></i>
+              return <label className={label}>
+                <i className={icon}></i>
                 {field[i]}
               </label>
             } : function() {
-              return <label className={label}> <i className={icon}></i>
+              return <label className={label}>
+                <i className={icon}></i>
                 {field[i]}
                 <b className="tooltip tooltip-bottom-right">{tooltip}</b>
                 <em className="invalids">{this.state.invalids[id]}</em>
@@ -1130,8 +1159,9 @@ class Form extends AbstractBase
     var field = jQuery.isArray(datas.field) === true ? datas.field : [datas.field];
     field.unshift(title);
     var grid = this.getGridClassNames(datas, '');
+    var requiredSpan = this.isRequiredField(id) === true ? <code>*</code> : <code></code>; 
     var fields = [
-      <label className={grid[0].join(' ')}>{field[0]}</label>
+      <label className={grid[0].join(' ')}>{field[0]} {requiredSpan}</label>
     ];
 
     if (jQuery.isPlainObject(option) === false) {
@@ -1228,6 +1258,7 @@ class Form extends AbstractBase
   renderLabelForSelect(datas, option)
   {
     var tmp = jQuery.extend(true, {}, datas);
+    jQuery('#' + datas.id).val(datas.value);
     var value =  $('#' + datas.id + ' option:selected').text();
     tmp.field = value;
     tmp.label = '';
@@ -1374,13 +1405,19 @@ class Form extends AbstractBase
         data['label'] = item.type;
       } else if (item.type === 'file') {
         data['label'] = data['label'] + ' input-file';
+      } else if (item.type === 'password') {
+        data['icon'] = 'icon-prepend fa fa-lock';
       } else if (item.type === 'select_multiple') {
+        data['label'] = 'select select-multiple';
+      } else if (item.type === 'select_2columns') {
         data['label'] = 'select select-multiple';
       } else if (item.type === 'textarea') {
         delete data.icon;
       }
-
-      var ret = jQuery.extend(item, data);
+      var ret = jQuery.extend(true, {},item, data);
+      if (ret.hasOwnProperty('value') === false) {
+        ret.value = undefined;
+      }
       datasObj[item.id] = ret;
     }.bind(this));
 

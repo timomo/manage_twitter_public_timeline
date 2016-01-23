@@ -59,8 +59,12 @@ class AbstractBase extends React.Component
   // @see http://stackoverflow.com/questions/332422/how-do-i-get-the-name-of-an-objects-type-in-javascript
   getName()
   {
-    var funcNameRegex = /function (.{1,})\(\)/;
+    var funcNameRegex = /function (.{1,})\(/;
     var results = (funcNameRegex).exec((this).constructor.toString());
-    return (results && results.length > 1) ? results[1] : "";
+    if (results && results.length > 1) {
+      var tmp = results[1].split('(');
+      return tmp[0];
+    }
+    return "";
   }
 }
