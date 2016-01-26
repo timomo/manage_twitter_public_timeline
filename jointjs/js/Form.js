@@ -5,11 +5,22 @@ class Form extends AbstractBase
     super(props);
   }
 
-  isCreateForm()
+  returnFormType()
   {
     var className = this.getName();
-    var regex = /Edit/;
-    if (regex.exec(className) === null) {
+    var regex = /(Edit|Create|View)/i;
+    var matched = regex.exec(className);
+    if (matched === null) {
+      return 'view';
+    }
+    var type = matched[1].toLowerCase();
+    return type;
+  }
+
+  isCreateForm()
+  {
+    var type = this.returnFormType();
+    if (type === 'create') {
       return true;
     }
     return false;
@@ -27,17 +38,18 @@ class Form extends AbstractBase
 
   renderModalSet(datasObj)
   {
-    var isCreate = this.isCreateForm();
+    var type = this.returnFormType();
     var ret = [];
-    if (isCreate === true) {
-      if (this.canCreate() === true) {
+    if (type === 'create') {
+      if (this.canAdd() === true) {
         ret.push(this.renderModal(datasObj));
       }
-    } else {
+    }
+    if (type === 'edit') {
       if (this.canEdit() === true) {
         ret.push(this.renderModal(datasObj));
       }
-      if (this.canDestroy() === true) {
+      if (this.canDelete() === true) {
         ret.push(this.renderModalDel(datasObj));
       }
     }
@@ -46,10 +58,10 @@ class Form extends AbstractBase
 
   renderSubmitButton()
   {
-    var isCreate = this.isCreateForm();
+    var type = this.returnFormType();
     var ret = [];
-    if (isCreate === true) {
-      if (this.canCreate() === true) {
+    if (type === 'create') {
+      if (this.canAdd() === true) {
         ret.push(
           <button type="button"
             className="btn btn-primary btn-lg pull-right header-btn"
@@ -61,7 +73,8 @@ class Form extends AbstractBase
           </button>
         );
       }
-    } else {
+    }
+    if (type === 'edit') {
       if (this.canEdit() === true) {
         ret.push(
           <button type="button"
@@ -73,7 +86,7 @@ class Form extends AbstractBase
           </button>
         );
       }
-      if (this.canDestroy() === true) {
+      if (this.canDelete() === true) {
         ret.push(
           <a
             data-toggle="modal"
@@ -96,10 +109,10 @@ class Form extends AbstractBase
 
   renderModalSubmitButton()
   {
-    var isCreate = this.isCreateForm();
+    var type = this.returnFormType();
     var ret = [];
-    if (isCreate === true) {
-      if (this.canCreate() === true) {
+    if (type === 'create') {
+      if (this.canAdd() === true) {
         ret.push(
           <button type="button"
             className="btn btn-primary"
@@ -110,7 +123,8 @@ class Form extends AbstractBase
           </button>
         );
       }
-    } else {
+    }
+    if (type === 'edit') {
       if (this.canEdit() === true) {
         ret.push(
           <button type="button"
@@ -171,33 +185,60 @@ class Form extends AbstractBase
         return {};
     }
 
-    returnShowDatas(id) {
-        var url_api = this.props.url_api;
-        if (Boolean(this.state.url_api) !== false) {
-          url_api = this.state.url_api;
-        }
-        var url = url_api + "/" + id;
-        var defer = $.Deferred();
-
-        $.ajax({
-            url: url,
-            dataType: 'json',
-            type: 'GET',
-            cache: false,
-            success: function(data) {
-                var data1 = jQuery.isPlainObject(data) === true ? data : {};
-                var datas = jQuery.extend(true, {}, this.state.datas, data);
-                this.setState({datas:datas});
-                defer.resolve(data);
-            }.bind(this),
-            error: function(xhr, status, err) {
-                console.error(status, err.toString());
-                defer.reject(xhr, status, err);
-            }.bind(this)
-        });
-
-        return defer.promise();
+  returnShowDatas(id)
+  {
+    var url_api = this.props.url_api;
+    if (Boolean(this.state.url_api) !== false) {
+      url_api = this.state.url_api;
     }
+    var url = url_api + "/" + id;
+    var defer = $.Deferred();
+
+    if (this.canGet() === false) {
+      this.setState({server_error: trans('messages.error.403')});
+      var xhr = new XMLHttpRequest();
+      var err = new Error();
+      defer.reject(xhr, status, err);
+      return defer.promise();
+    }
+
+    $.ajax({
+      url: url,
+      dataType: 'json',
+      type: 'GET',
+      cache: false,
+      success: function(data) {
+        var data1 = jQuery.isPlainObject(data) === true ? data : {};
+        var datas = jQuery.extend(true, {}, this.state.datas, data);
+        this.setState({datas:datas});
+        defer.resolve(data);
+      }.bind(this),
+      error: function(xhr, status, err) {
+        console.error(status, err.toString());
+        // $('#myModal').modal('hide');
+        var invalids = {};
+        this.setState({invalids: invalids});
+        if (422 === xhr.status) {
+          var responseJson = JSON.parse(xhr.responseText);
+          $.each(responseJson, function(id, value) {
+            var divid = "div_" + id;
+            var emid = "em_" + id;
+            $('#' + divid).addClass("state-error");
+            $('#' + emid).html(value.join(", "));
+            invalids[id] = (invalids[id] ? invalids[id] : '') + value.join(", ");
+          });
+          this.setState({invalids: invalids});
+        } else if (403 === xhr.status) {
+          this.setState({server_error: trans('messages.error.403')});
+        } else {
+          this.setState({server_error: trans('messages.error.500')});
+        }
+        defer.reject(xhr, status, err);
+      }.bind(this)
+    });
+
+    return defer.promise();
+  }
 
     // @see https://github.com/js-cookie/js-cookie/blob/master/src/js.cookie.js
     returnCookieXSRFToken() {
@@ -281,8 +322,6 @@ class Form extends AbstractBase
       url_redirect = this.state.url_redirect;
     }
     var url = url_api + "/" + this.getMyId();
-
-    // TODO: コード整形
 
         $.ajax({
             url: url,

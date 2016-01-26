@@ -88,12 +88,28 @@ class OurDataTree extends AbstractBase
 
   loadFromServer()
   {
+    var url_api = this.props.url_api;
+    if (Boolean(this.state.url_api) !== false) {
+      url_api = this.state.url_api;
+    }
+    var url = url_api + '/tree';
+    var defer = $.Deferred();
+
+    if (this.canGet() === false) {
+      this.setState({server_error: trans('messages.error.403')});
+      var xhr = new XMLHttpRequest();
+      var err = new Error();
+      defer.reject(xhr, status, err);
+      return defer.promise();
+    }
+
     $.ajax({
-      url: this.state.url_api + '/tree',
+      url: url,
       dataType: 'json',
       cache: false,
       success: function(data) {
         this.setState({data: data});
+        defer.resolve(data);
       }.bind(this),
       error: function(xhr, status, err) {
         if (422 === xhr.status) {
@@ -105,8 +121,11 @@ class OurDataTree extends AbstractBase
           this.setState({server_error: trans('messages.error.500')});
         }
         console.error(this.state.url_api, status, err.toString());
+        defer.reject(xhr, status, err);
       }.bind(this),
     });
+
+    return defer.promise();
   }
 
   componentWillMount()
@@ -244,7 +263,7 @@ class OurDataTree extends AbstractBase
   render()
   {
     var display_server_error = this.state.server_error ? "block" : "none";
-    var display_create = this.canCreate() ? "show" : "none";
+    var display_create = this.canAdd() ? "show" : "none";
     var className = this.getName();
     var classNameOfBody = className + 'Body';
 

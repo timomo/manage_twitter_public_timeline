@@ -33,28 +33,97 @@ class AbstractBase extends React.Component
 
     }
 
-    canCreate() {
-        return this.canAction('create');
-    }
+  returnPluginUrl()
+  {
+    var url = location.href.replace(base_path, '');
+    url = url.replace(/\?.*/, '');
+    url = url.replace(/\#.*/, '');
+    var tmp = url.split('/');
+    return tmp[1];
+  }
 
-    canEdit() {
-        return this.canAction('edit');
-    }
+  returnExcludePattern()
+  {
+    return [
+      /^get_home$/,
+    ];
+  }
 
-    canDestroy() {
-        return this.canAction('destroy');
+  canGet()
+  {
+    var plugin = this.returnPluginUrl();
+    var key = 'get_' + plugin;
+    return this.canAction(key);
+  }
+
+  canAdd()
+  {
+    var plugin = this.returnPluginUrl();
+    var key = 'add_' + plugin;
+    return this.canAction(key);
+  }
+
+  canEdit()
+  {
+    var plugin = this.returnPluginUrl();
+    var key = 'edit_' + plugin;
+    return this.canAction(key);
+  }
+
+  canDelete()
+  {
+    var plugin = this.returnPluginUrl();
+    var key = 'del_' + plugin;
+    return this.canAction(key);
+  }
+
+  /**
+   * 互換性の維持の為、元のメソッドを残してあります
+   */
+  canCreate()
+  {
+    console.warn('canCreate is departed. please call function canAdd.');
+    return this.canAdd();
+  }
+
+  canDestroy()
+  {
+    console.warn('canDestroy is departed. please call function canDelete.');
+    return this.canDelete();
+  }
+
+  canAction(action)
+  {
+    var patterns = this.returnExcludePattern();
+    var ret = false;
+    // ホーム全般は許可
+    patterns.forEach(function(pattern) {
+      switch (jQuery.type(pattern)) {
+        case 'regexp':
+          if (action.match(pattern) !== null) {
+            ret = true;
+            return true;
+          }
+          break;
+        case 'string':
+          if (action === pattern) {
+            ret = true;
+            return true;
+          }
+          break;
+        default:
+          return false;
+      }
+    }.bind(this));
+    if (ret === true) {
+      return ret;
     }
- 
-    canAction(action) {
-        var json = JSON.parse(matched_actions.replace(/&quot;/g, '"'));
-        var ret = false;
-        json.forEach(function(val, index) {
-            if (val === action) {
-                ret = true;
-            }
-        });
-        return ret;
+    var json = JSON.parse(matched_actions.replace(/&quot;/g, '"'));
+    if (json.hasOwnProperty(action) === true) {
+      ret = json[action] === 1 ? true : false;
     }
+    return ret;
+  }
 
   // @see http://stackoverflow.com/questions/332422/how-do-i-get-the-name-of-an-objects-type-in-javascript
   getName()
