@@ -1002,6 +1002,9 @@ class Form extends AbstractBase
       case "radio":
         result = this.renderLabelForRadioInput(datas, option);
         break;
+      case "checkbox":
+        result = this.renderLabelForCheckboxInput(datas, option);
+        break;
       case "select":
         result = this.renderLabelForSelect(datas, option);
         break;
@@ -1092,17 +1095,33 @@ class Form extends AbstractBase
     if (render === 'label') {
       for (var i = 0; i < grid.length; i++) {
         if (i === 0) {
-          cols.push(['label', 'col', 'col-' + grid[i]]);
+          if (grid[i] !== '') {
+            cols.push(['label', 'col', 'col-' + grid[i]]);
+          } else {
+            cols.push([]);
+          }
         } else {
-          cols.push(['label', 'col', 'col-' + grid[i]]);
+          if (grid[i] !== '') {
+            cols.push(['label', 'col', 'col-' + grid[i]]);
+          } else {
+            cols.push([]);
+          }
         }
       }
     } else {
       for (var i = 0; i < grid.length; i++) {
         if (i === 0) {
-          cols.push(['label', 'col', 'col-' + grid[i]]);
+          if (grid[i] !== '') {
+            cols.push(['label', 'col', 'col-' + grid[i]]);
+          } else {
+            cols.push([]);
+          }
         } else {
-          cols.push(['col', 'col-' + grid[i]]);
+          if (grid[i] !== '') {
+            cols.push(['col', 'col-' + grid[i]]);
+          } else {
+            cols.push([]);
+          }
         }
       }
     }
@@ -1139,9 +1158,12 @@ class Form extends AbstractBase
     icon = '';
 
     if (jQuery.isPlainObject(option) === false) {
-      option = {section: true};
+      option = {section: true, label: true};
     }
     label = label + ' ' + (this.state.invalids[id] ? 'state-error' : '');
+    if (option.hasOwnProperty('label') === true && option.label === false) {
+      fields = [null];
+    }
 
     for (var i = 1; i < grid.length; i++) {
       if (i === 1) {
@@ -1204,9 +1226,12 @@ class Form extends AbstractBase
     ];
 
     if (jQuery.isPlainObject(option) === false) {
-      option = {section: true};
+      option = {section: true, label: true};
     }
     label = label + ' ' + (this.state.invalids[id] ? 'state-error' : '');
+    if (option.hasOwnProperty('label') === true && option.label === false) {
+      fields = [null];
+    }
 
     for (var i = 1; i < grid.length; i++) {
       if (i === 1) {
@@ -1299,6 +1324,16 @@ class Form extends AbstractBase
     var tmp = jQuery.extend(true, {}, datas);
     jQuery('#' + datas.id).val(datas.value);
     var value =  $('#' + datas.id + ' option:selected').text();
+    tmp.field = value;
+    tmp.label = '';
+    return this.renderLabelFieldToDatasObject(tmp, option);
+  }
+
+  renderLabelForCheckboxInput(datas, option)
+  {
+    var tmp = jQuery.extend(true, {}, datas);
+    jQuery('#' + datas.id).val(datas.value);
+    var value =  $('input[name="' + datas.id + '"]:checked').siblings('span').html();
     tmp.field = value;
     tmp.label = '';
     return this.renderLabelFieldToDatasObject(tmp, option);
