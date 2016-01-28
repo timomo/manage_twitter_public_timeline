@@ -26,6 +26,15 @@ class Form extends AbstractBase
     return false;
   }
 
+  isEditForm()
+  {
+    var type = this.returnFormType();
+    if (type === 'edit') {
+      return true;
+    }
+    return false;
+  }
+
   renderEditSection()
   {
     var isCreate = this.isCreateForm();
@@ -56,7 +65,7 @@ class Form extends AbstractBase
     return ret;
   }
 
-  renderSubmitButton()
+  renderSubmitButton(disabled='')
   {
     var type = this.returnFormType();
     var ret = [];
@@ -90,7 +99,7 @@ class Form extends AbstractBase
         ret.push(
           <a
             data-toggle="modal"
-            href="#myModalDel"
+            href={'#' + this.props.formid + '-modal-del'}
             className="btn btn-danger btn-lg pull-left header-btn"
           >
             <i className="fa fa-circle-arrow-up fa-lg"></i>
@@ -215,7 +224,6 @@ class Form extends AbstractBase
       }.bind(this),
       error: function(xhr, status, err) {
         console.error(status, err.toString());
-        // $('#myModal').modal('hide');
         var invalids = {};
         this.setState({invalids: invalids});
         if (422 === xhr.status) {
@@ -277,12 +285,10 @@ class Form extends AbstractBase
             type: 'POST',
             data: params,
             success: function(data) {
-                $('#myModal').modal('hide');
                 location.href = url_redirect;
             }.bind(this),
             error: function(xhr, status, err) {
                 console.error(status, err.toString());
-                $('#myModal').modal('hide');
                 var invalids = {};
                 this.setState({invalids: invalids});
                 if (422 === xhr.status) {
@@ -302,6 +308,11 @@ class Form extends AbstractBase
                 }
             }.bind(this),
             complete: function(xhr, status) {
+                if (jQuery('#' + this.props.formid + '-modal').size() !== 0) {
+                  $('#' + this.props.formid +'-modal').modal('hide');
+                } else {
+                  $('#myModal').modal('hide');
+                }
                 this.setState({disabled_button: false});
             }.bind(this)
         });
@@ -330,12 +341,10 @@ class Form extends AbstractBase
             type: 'PUT',
             data: params,
             success: function(data) {
-                $('#myModal').modal('hide');
                 location.href = url_redirect;
             }.bind(this),
             error: function(xhr, status, err) {
                 console.error(status, err.toString());
-                $('#myModal').modal('hide');
                 var invalids = {};
                 this.setState({invalids: invalids});
                 if (422 === xhr.status) {
@@ -355,6 +364,11 @@ class Form extends AbstractBase
                 }
             }.bind(this),
             complete: function(xhr, status) {
+                if (jQuery('#' + this.props.formid + '-modal').size() !== 0) {
+                  $('#' + this.props.formid +'-modal').modal('hide');
+                } else {
+                  $('#myModal').modal('hide');
+                }
                 this.setState({disabled_button: false});
             }.bind(this)
         });
@@ -382,12 +396,10 @@ class Form extends AbstractBase
             type: 'DELETE',
             data: params,
             success: function(data) {
-                $('#myModalDel').modal('hide');
                 location.href = url_redirect;
             }.bind(this),
             error: function(xhr, status, err) {
                 console.error(status, err.toString());
-                $('#myModalDel').modal('hide');
                 var invalids = {};
                 this.setState({invalids: invalids});
                 if (422 === xhr.status) {
@@ -407,6 +419,11 @@ class Form extends AbstractBase
                 }
             }.bind(this),
             complete: function(xhr, status) {
+                if (jQuery('#' + this.props.formid + '-modal-del').size() !== 0) {
+                  $('#' + this.props.formid +'-modal-del').modal('hide');
+                } else {
+                  $('#myModalDel').modal('hide');
+                }
                 this.setState({disabled_button: false});
             }.bind(this)
         });
@@ -650,16 +667,37 @@ class Form extends AbstractBase
     if (disabled === undefined || disabled === null) {
       disabled = '';
     }
+
     var tmp = jQuery.extend(true, {}, datas);
     var self = this;
-    var options = values.map(function(name, value) {
-      var checked = (value == datas.value) ? true : false;
-      return (
-        <label key={value} className="radio">
-          <input type="radio" id={datas.id} name={datas.id} value={value} checked={checked} onChange={self.changeRadio.bind(self)} /><i></i>{name}
-        </label>
-      )
-    });
+    var options;
+    if (jQuery.isArray(values) === true) {
+      options = values.map(function(name, value) {
+        var value = values[name];
+        var checked = (value == datas.value) ? true : false;
+        return (
+          <label key={value} className="radio">
+            <input type="radio" id={datas.id} name={datas.id} value={value}
+              checked={checked} onChange={self.changeRadio.bind(self)} disabled={disabled}
+            />
+            <i></i>{name}
+          </label>
+        )
+      });
+    } else {
+      options = Object.keys(values).map(function(value) {
+        var name = values[value];
+        var checked = (value == datas.value) ? true : false;
+        return (
+          <label key={value} className="radio">
+            <input type="radio" id={datas.id} name={datas.id} value={value}
+              checked={checked} onChange={self.changeRadio.bind(self)} disabled={disabled}
+            />
+            <i></i>{name}
+          </label>
+        )
+      });
+    }
     return (
       <section>
         <div className="row">
@@ -1398,7 +1436,7 @@ class Form extends AbstractBase
   renderModalDel(datasObj)
   {
     return (
-      <div className="modal fade" id="myModalDel" role="dialog">
+      <div className="modal fade" id={this.props.formid + "-modal-del"} role="dialog">
         <div className="modal-dialog">
           <div className="modal-content">
             <div className="modal-header">
@@ -1410,7 +1448,7 @@ class Form extends AbstractBase
               </h4>
             </div>
             <div className="modal-body no-padding">
-              <form id="check-form" className="smart-form">
+              <form id={this.props.formid + "-check-form"} className="smart-form">
                 <fieldset>
                   {trans(this.props.messages_prefix + '.remind-delete')}
                 </fieldset>
@@ -1550,7 +1588,11 @@ class Form extends AbstractBase
     var ret = jQuery('#' + this.props.formid).valid();
     // var ret = true;
     if (ret) {
-      jQuery('#myModal').modal('show');
+      if (jQuery('#' + this.props.formid + '-modal').size() !== 0) {
+        jQuery('#' + this.props.formid + '-modal').modal('show');
+      } else {
+        jQuery('#myModal').modal('show');
+      }
     }
   }
 
