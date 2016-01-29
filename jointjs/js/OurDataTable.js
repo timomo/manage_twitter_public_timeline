@@ -113,6 +113,11 @@ class OurDataTable extends AbstractBase
 
   componentDidUpdate()
   {
+    this.createTable();
+  }
+
+  createTable()
+  {
     var prefix = "messages.datatables.";
     var table = $('#'+this.state.tableid).dataTable({
       "language": {
@@ -153,6 +158,25 @@ class OurDataTable extends AbstractBase
     var newurl = location.protocol+'//'+location.hostname+location.pathname+"/create";
     console.info(newurl);
     location.href = newurl;
+  }
+
+  handleImport(e)
+  {
+    var newurl = location.pathname+"/import";
+    location.href = newurl;
+  }
+
+  handleExport(e)
+  {
+    var url_api = this.state.url_api + "/export";
+
+    if (this.canExport() === false) {
+      this.setState({server_error: trans('messages.error.403')});
+    }
+
+    window.open(url_api, '_top');
+
+    return false;
   }
 
   render()

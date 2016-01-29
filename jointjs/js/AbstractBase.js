@@ -77,6 +77,27 @@ class AbstractBase extends React.Component
     return this.canAction(key);
   }
 
+  canImport()
+  {
+    var plugin = this.returnPluginUrl();
+    var key = 'add_' + plugin;
+    if(this.canAction(key) === true) {
+      return true;
+    }
+    key = 'edit_' + plugin;
+    if(this.canAction(key) === true) {
+      return true;
+    }
+    return false;
+  }
+
+  canExport()
+  {
+    var plugin = this.returnPluginUrl();
+    var key = 'csv_' + plugin;
+    return this.canAction(key);
+  }
+
   /**
    * 互換性の維持の為、元のメソッドを残してあります
    */

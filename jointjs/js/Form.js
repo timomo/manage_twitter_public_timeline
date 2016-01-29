@@ -37,8 +37,8 @@ class Form extends AbstractBase
 
   renderEditSection()
   {
-    var isCreate = this.isCreateForm();
-    if (isCreate === true) {
+    var type = this.returnFormType();
+    if (type !== 'edit') {
       return;
     } else {
       return this.renderLabelForTimestamps(this.state.datas, {});
@@ -194,6 +194,13 @@ class Form extends AbstractBase
         return {};
     }
 
+  returnUploadDatas()
+  {
+    var params = {};
+    params['csv'] = this.state.datas['csv'];
+    return params;
+  }
+
   returnShowDatas(id)
   {
     var url_api = this.props.url_api;
@@ -317,6 +324,70 @@ class Form extends AbstractBase
             }.bind(this)
         });
     }
+
+  handleUpload(e)
+  {
+    var params = this.returnUploadDatas();
+    this.setState({disabled_button: true});
+    var token = this.returnCookieXSRFToken();
+    var url_api = this.props.url_api_upload;
+    var url_redirect = this.props.url_redirect;
+    var defer = $.Deferred();
+    var url;
+    if (Boolean(this.state.url_api_upload) !== false) {
+      url_api = this.state.url_api_upload;
+    }
+    if (Boolean(this.state.url_redirect) !== false) {
+      url_redirect = this.state.url_redirect;
+    }
+    url = url_api;
+
+    if (url === undefined) {
+      console.warn('props.url_api_upload is undefined.');
+    };
+
+    $.ajax({
+      url: url,
+      headers: {'X-XSRF-TOKEN': token},
+      dataType: 'json',
+      type: 'POST',
+      data: params,
+      success: function(data) {
+        defer.resolve(data);
+      }.bind(this),
+      error: function(xhr, status, err) {
+        console.error(status, err.toString());
+        var invalids = {};
+        this.setState({invalids: invalids});
+        if (422 === xhr.status) {
+          var responseJson = JSON.parse(xhr.responseText);
+          $.each(responseJson, function(id, value) {
+            var divid = "div_" + id;
+            var emid = "em_" + id;
+            $('#' + divid).addClass("state-error");
+            $('#' + emid).html(value.join(", "));
+            invalids[id] = (invalids[id] ? invalids[id] : '') + value.join(", ");
+          });
+          this.setState({invalids: invalids});
+        } else if (403 === xhr.status) {
+          this.setState({server_error: trans('messages.error.403')});
+        } else {
+          this.setState({server_error: trans('messages.error.500')});
+        }
+        defer.reject(xhr, status, err);
+      }.bind(this),
+      complete: function(xhr, status) {
+        if (jQuery('#' + this.props.formid + '-modal-upload').size() !== 0) {
+          $('#' + this.props.formid +'-modal-upload').modal('hide');
+        } else {
+          $('#myModalUpload').modal('hide');
+        }
+        this.setState({disabled_button: false});
+      }.bind(this)
+    });
+
+    return defer.promise();
+  }
 
   handleUpdate(e)
   {
@@ -1435,6 +1506,8 @@ class Form extends AbstractBase
 
   renderModalDel(datasObj)
   {
+    var display_delete = this.canDelete() === true ? "block" : "none";
+
     return (
       <div className="modal fade" id={this.props.formid + "-modal-del"} role="dialog">
         <div className="modal-dialog">
@@ -1453,8 +1526,57 @@ class Form extends AbstractBase
                   {trans(this.props.messages_prefix + '.remind-delete')}
                 </fieldset>
                 <footer>
-                  <button type="button" className="btn btn-danger" onClick={this.handleDelete.bind(this)} disabled={this.state.disabled_button} >
+                  <button
+                    type="button"
+                    className="btn btn-danger"
+                    onClick={this.handleDelete.bind(this)}
+                    disabled={this.state.disabled_button}
+                    style={{display: display_delete}}
+                  >
                     {trans('messages.button.delete')}
+                  </button>
+                  <button type="button" className="btn btn-default" data-dismiss="modal">
+                    {trans('messages.button.cancel')}
+                  </button>
+                </footer>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  renderModalUpload(datasObj)
+  {
+    var display_import = this.canImport() === true ? "block" : "none";
+
+    return (
+      <div className="modal fade" id={this.props.formid + "-modal-upload"} role="dialog">
+        <div className="modal-dialog">
+          <div className="modal-content">
+            <div className="modal-header">
+              <button type="button" className="close" data-dismiss="modal" aria-hidden="true">
+                &times;
+              </button>
+              <h4 className="modal-title">
+                {trans(this.props.messages_prefix + '.title-confirm-popup')}
+              </h4>
+            </div>
+            <div className="modal-body no-padding">
+              <form id={this.props.formid + "-check-form-upload"} className="smart-form">
+                <fieldset>
+                  {trans(this.props.messages_prefix + '.remind-upload')}
+                </fieldset>
+                <footer>
+                  <button
+                    type="button"
+                    className="btn btn-primary"
+                    onClick={this.handleUpload.bind(this)}
+                    disabled={this.state.disabled_button}
+                    style={{display: display_import}}
+                  >
+                    {trans('messages.button.upload')}
                   </button>
                   <button type="button" className="btn btn-default" data-dismiss="modal">
                     {trans('messages.button.cancel')}
@@ -1586,12 +1708,23 @@ class Form extends AbstractBase
   handleConfirm(e)
   {
     var ret = jQuery('#' + this.props.formid).valid();
-    // var ret = true;
     if (ret) {
       if (jQuery('#' + this.props.formid + '-modal').size() !== 0) {
         jQuery('#' + this.props.formid + '-modal').modal('show');
       } else {
         jQuery('#myModal').modal('show');
+      }
+    }
+  }
+
+  handleConfirmUpload(e)
+  {
+    var ret = jQuery('#' + this.props.formid).valid();
+    if (ret) {
+      if (jQuery('#' + this.props.formid + '-modal-upload').size() !== 0) {
+        jQuery('#' + this.props.formid + '-modal-upload').modal('show');
+      } else {
+        jQuery('#myModalUpload').modal('show');
       }
     }
   }
