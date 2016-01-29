@@ -744,7 +744,6 @@ class Form extends AbstractBase
     var options;
     if (jQuery.isArray(values) === true) {
       options = values.map(function(name, value) {
-        var value = values[name];
         var checked = (value == datas.value) ? true : false;
         return (
           <label key={value} className="radio">
