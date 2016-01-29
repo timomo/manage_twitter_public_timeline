@@ -45,6 +45,7 @@ class AbstractBase extends React.Component
   returnExcludePattern()
   {
     return [
+      /^(get|edit)_profile$/,
       /^get_home$/,
     ];
   }
