@@ -162,13 +162,13 @@ class OurDataTable extends AbstractBase
 
   handleImport(e)
   {
-    var newurl = location.pathname+"/import";
+    var newurl = location.pathname + "/import/create";
     location.href = newurl;
   }
 
   handleExport(e)
   {
-    var url_api = this.state.url_api + "/export";
+    var url_api = location.pathname + "/export";
 
     if (this.canExport() === false) {
       this.setState({server_error: trans('messages.error.403')});

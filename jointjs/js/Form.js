@@ -65,7 +65,7 @@ class Form extends AbstractBase
     return ret;
   }
 
-  renderSubmitButton(disabled='')
+  renderSubmitButton()
   {
     var type = this.returnFormType();
     var ret = [];
@@ -73,6 +73,7 @@ class Form extends AbstractBase
       if (this.canAdd() === true) {
         ret.push(
           <button type="button"
+            key="create"
             className="btn btn-primary btn-lg pull-right header-btn"
             disabled={this.state.disabled_button}
             onClick={this.handleConfirm.bind(this)}
@@ -87,6 +88,7 @@ class Form extends AbstractBase
       if (this.canEdit() === true) {
         ret.push(
           <button type="button"
+            key="edit"
             className="btn btn-primary btn-lg pull-right header-btn"
             onClick={this.handleConfirm.bind(this)}
           >
@@ -101,6 +103,7 @@ class Form extends AbstractBase
             data-toggle="modal"
             href={'#' + this.props.formid + '-modal-del'}
             className="btn btn-danger btn-lg pull-left header-btn"
+            key="delete"
           >
             <i className="fa fa-circle-arrow-up fa-lg"></i>
             {trans('messages.button.delete')}
@@ -109,7 +112,7 @@ class Form extends AbstractBase
       }
     }
     ret.push(
-      <button type="button" className="btn btn-default" onClick={this.handleCancel.bind(this)} >
+      <button type="button" className="btn btn-default" onClick={this.handleCancel.bind(this)} key="cancel" >
         {trans('messages.button.cancel')}
       </button>
     );
@@ -124,6 +127,7 @@ class Form extends AbstractBase
       if (this.canAdd() === true) {
         ret.push(
           <button type="button"
+            key="create"
             className="btn btn-primary"
             disabled={this.state.disabled_button}
             onClick={this.handleSubmit.bind(this)}
@@ -137,6 +141,7 @@ class Form extends AbstractBase
       if (this.canEdit() === true) {
         ret.push(
           <button type="button"
+            key="edit"
             className="btn btn-primary"
             disabled={this.state.disabled_button}
             onClick={this.handleUpdate.bind(this)}
@@ -147,7 +152,7 @@ class Form extends AbstractBase
       }
     }
     ret.push(
-      <button type="button" className="btn btn-default" data-dismiss="modal">
+      <button type="button" className="btn btn-default" data-dismiss="modal" key="cancel">
         {trans('messages.button.cancel')}
       </button>
     );
@@ -292,6 +297,7 @@ class Form extends AbstractBase
             type: 'POST',
             data: params,
             success: function(data) {
+                this.setState({server_error: ''});
                 location.href = url_redirect;
             }.bind(this),
             error: function(xhr, status, err) {
@@ -353,6 +359,7 @@ class Form extends AbstractBase
       type: 'POST',
       data: params,
       success: function(data) {
+        this.setState({server_error: ''});
         defer.resolve(data);
       }.bind(this),
       error: function(xhr, status, err) {
@@ -412,6 +419,7 @@ class Form extends AbstractBase
             type: 'PUT',
             data: params,
             success: function(data) {
+                this.setState({server_error: ''});
                 location.href = url_redirect;
             }.bind(this),
             error: function(xhr, status, err) {
@@ -467,6 +475,7 @@ class Form extends AbstractBase
             type: 'DELETE',
             data: params,
             success: function(data) {
+                this.setState({server_error: ''});
                 location.href = url_redirect;
             }.bind(this),
             error: function(xhr, status, err) {
@@ -865,6 +874,7 @@ class Form extends AbstractBase
     tmp.field = <label className={label}>
                   <select id={datas.id} name={datas.id} ref={datas.id} value={datas.value} onChange={this.changeSelect.bind(this)}
                     className="select2"
+                    disabled={disabled}
                   >
                     {options}
                   </select>
@@ -1630,7 +1640,7 @@ class Form extends AbstractBase
         type: item.type,
         title: trans(this.props.messages_prefix + '.form.' + item.id),
         label: 'input',
-        icon: 'icon-prepend fa fa-user',
+        icon: item.icon!=='' ? item.icon : '',
         value: this.state.datas[item.id],
         tooltip: trans(this.props.messages_prefix + '.tooltip.' + item.id)
       };
@@ -1638,8 +1648,6 @@ class Form extends AbstractBase
         data['label'] = item.type;
       } else if (item.type === 'file') {
         data['label'] = data['label'] + ' input-file';
-      } else if (item.type === 'password') {
-        data['icon'] = 'icon-prepend fa fa-lock';
       } else if (item.type === 'select_multiple') {
         data['label'] = 'select select-multiple';
       } else if (item.type === 'select_2columns') {
