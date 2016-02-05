@@ -179,4 +179,19 @@ class AbstractBase extends React.Component
 
     return range;
   }
+
+  insertSeparater(sep, array)
+  {
+    if (sep === undefined || sep === null) {
+      sep = <span> </span>;
+    }
+    var ret = [];
+    array.forEach(function(row, i) {
+      ret.push(row);
+      if (i !== array.length - 1) {
+        ret.push(sep);
+      }
+    });
+    return ret;
+  }
 }

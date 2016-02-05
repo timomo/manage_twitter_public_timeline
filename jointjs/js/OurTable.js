@@ -57,66 +57,161 @@ class OurTableBody extends AbstractBase
   }
 }
 
-class OurTablePageHeader extends AbstractBase
+class OurTablePageHeader extends Form
 {
   constructor(props)
   {
     super(props);
+    var params = this.getParameters();
+    var datas = {
+    };
+    var invalids = {};
+
     this.state = {
       data: props.data,
+      datas: datas,
+      url_api: props.url_api,
+      url_redirect: props.url_redirect,
+      server_error: null,
+      invalids: invalids,
+      disabled_button: false,
     };
+  }
+
+  returnValidationRules()
+  {
+    var rules = {
+      search: {
+      },
+      entries_per_page: {
+      },
+    };
+    return rules;
+  }
+
+  returnDatasObject()
+  {
+    var datasObj = super();
+    datasObj.search.value = this.props.search;
+    datasObj.search.cols = [2, 4];
+    datasObj.entries_per_page.value = this.props.entries_per_page;
+    datasObj.entries_per_page.cols = [2, 4];
+    return datasObj;
   }
 
   render()
   {
+    var datasObj = this.returnDatasObject();
+    var entries_per_pages = {};
+    this.props.entries_per_pages.forEach(function(number) {
+      entries_per_pages[number] = number;
+    }.bind(this));
+    var display_create = this.canAdd() ? "show" : "none";
+    var buttons = [];
+
+    if (this.props.button === true) {
+      if (this.canEdit() === true) {
+        buttons.push(
+          <button
+            type="button"
+            className="btn btn-default"
+            onClick={this.props.handleClick.bind(this)}
+          >
+            <i className="fa fa-repeat"></i> {trans('messages.button.reload')}
+          </button>
+        );
+      }
+
+      if (this.canEdit() === true) {
+        buttons.push(
+          <button
+            type="button"
+            className="btn btn-default"
+            style={{display: display_create}}
+            onClick={this.props.handleCreate.bind(this)}
+          >
+            <i className="fa fa-plus"></i> {trans('messages.button.create')}
+          </button>
+        );
+      }
+    }
+
     return (
-      <div className="dt-toolbar">
-        <div className="col-xs-12 col-sm-6">
-          <div id="core-auditlog-table_filter" className="dataTables_filter">
-            <label>検索<input type="search" className="form-control" placeholder="" aria-controls="core-auditlog-table" /></label>
-          </div>
+      <div className="dt-toolbar" style={{'borderBottom': '0px!important'}}>
+        <div className="col-xs-12 col-sm-4">
+          {buttons}
         </div>
-        <div className="col-xs-12 col-sm-6">
-          <div className="dataTables_length" id="core-auditlog-table_length">
-            <label>1ページあたりの表示件数:
-              <i> </i>
-              <select name="core-auditlog-table_length" aria-controls="core-auditlog-table" className="form-control">
-                <option value="10">10</option>
-                <option value="25">25</option>
-                <option value="50">50</option>
-                <option value="100">100</option>
-              </select>
-            </label>
-          </div>
+        <div className="col-xs-12 col-sm-8">
+          <form id={this.props.formid} className="smart-form no-padding">
+            <fieldset className="no-padding">
+              {this.renderInput(datasObj.search, '', {section: false})}
+              {this.renderInput(datasObj.entries_per_page, entries_per_pages, '', {section: false})}
+            </fieldset>
+          </form>
         </div>
       </div>
     );
   }
+
+  changeSelect(e)
+  {
+    this.props.handleChangeEntriesPerPage(e);
+  }
+
+  changeText(e)
+  {
+    this.props.handleChangeSearchText(e);
+  }
 }
 
-class OurTablePageFooter extends AbstractBase
+class OurTablePageFooter extends Form
 {
   constructor(props)
   {
     super(props);
+    var params = this.getParameters();
+    var datas = {
+    };
+    var invalids = {};
+
     this.state = {
-      data: props.data,
+      datas: datas,
+      url_api: props.url_api,
+      url_redirect: props.url_redirect,
+      server_error: null,
+      invalids: invalids,
+      disabled_button: false,
     };
   }
 
-/*
-      first: this.state.first,
-      last: this.state.last,
-      first_page: this.state.first_page,
-      last_page: this.state.last_page,
-      total_entries: this.state.total_entries,
-      entries_per_page: this.state.entries_per_page,
-      current_page: this.state.current_page,
-      previous_page: this.state.previous_page,
-      next_page: this.state.next_page,
- */
+  returnValidationRules()
+  {
+    var rules = {
+    };
+    return rules;
+  }
 
-  render()
+  returnPageRange()
+  {
+    var range = [];
+    var first = this.props.first;
+    var last = this.props.last;
+    var first_page = this.props.first_page;
+    var last_page = this.props.last_page;
+    var current_page = this.props.current_page;
+
+    if (current_page <= 4) {
+      range = this.range(1, 6, 1);
+    } else if (current_page > last_page - 4) {
+      range = this.range(last_page - 4, last_page + 1, 1);
+    } else {
+      range = this.range(current_page - 1, current_page + 2, 1);
+    }
+
+    return range;
+  }
+
+  returnPages()
   {
     var disable_previous_page = this.props.previous_page !== null ? '' : 'disabled';
     var disable_next_page = this.props.next_page !== null ? '' : 'disabled';
@@ -126,15 +221,7 @@ class OurTablePageFooter extends AbstractBase
     var first_page = this.props.first_page;
     var last_page = this.props.last_page;
     var current_page = this.props.current_page;
-    var range = [];
-
-    if (current_page <= 4) {
-      range = this.range(1, 6, 1);
-    } else if (current_page > last_page - 4) {
-      range = this.range(last_page - 4, last_page + 1, 1);
-    } else {
-      range = this.range(current_page - 1, current_page + 2, 1);
-    }
+    var range = this.returnPageRange();
 
     if (jQuery.inArray(first_page, range) === -1) {
       pages.push(
@@ -208,8 +295,49 @@ class OurTablePageFooter extends AbstractBase
       );
     }
 
+    return pages;
+  }
+
+  returnPreviousPage()
+  {
+    var disable_previous_page = this.props.previous_page !== null ? '' : 'disabled';
     return (
-      <div className="dt-toolbar-footer">
+      <li
+        className={"paginate_button previous " + disable_previous_page}
+        onClick={this.props.handleChange.bind(this, this.props.previous_page)}
+        aria-controls={this.props.tableid + "-table"}
+        tabIndex="0"
+        id={this.props.formid + "-table_previous"}
+      >
+        <a href="#">前へ</a>
+      </li>
+    );
+  }
+
+  returnNextPage()
+  {
+    var disable_next_page = this.props.next_page !== null ? '' : 'disabled';
+    return (
+      <li
+        className={"paginate_button next " + disable_next_page}
+        onClick={this.props.handleChange.bind(this, this.props.next_page)}
+        aria-controls={this.props.tableid + "-table"}
+        tabIndex="0"
+        id={this.props.tableid + "-table_next"}
+      >
+        <a href="#">次へ</a>
+      </li>
+    );
+  }
+
+  render()
+  {
+    var pages = this.returnPages();
+    var previousPage = this.returnPreviousPage();
+    var nextPage = this.returnNextPage();
+
+    return (
+      <div className="dt-toolbar-footer" style={{'borderTop': '0px!important'}}>
         <div className="col-xs-12 col-sm-6">
           <div className="dataTables_info" id={this.props.tableid + "-table_info"} role="status" aria-live="polite">
             {this.props.total_entries} 件中 {this.props.first} 件から {this.props.last} 件までを表示
@@ -218,25 +346,9 @@ class OurTablePageFooter extends AbstractBase
         <div className="col-xs-12 col-sm-6">
           <div className="dataTables_paginate paging_simple_numbers" id={this.props.tableid + "-table_paginate"}>
             <ul className="pagination pagination-sm">
-              <li
-                className={"paginate_button previous " + disable_previous_page}
-                onClick={this.props.handleChange.bind(this, this.props.previous_page)}
-                aria-controls={this.props.tableid + "-table"}
-                tabIndex="0"
-                id={this.props.formid + "-table_previous"}
-              >
-                <a href="#">前へ</a>
-              </li>
+              {previousPage}
               {pages}
-              <li
-                className={"paginate_button next " + disable_next_page}
-                onClick={this.props.handleChange.bind(this, this.props.next_page)}
-                aria-controls={this.props.tableid + "-table"}
-                tabIndex="0"
-                id={this.props.tableid + "-table_next"}
-              >
-                <a href="#">次へ</a>
-              </li>
+              {nextPage}
             </ul>
           </div>
         </div>
@@ -250,6 +362,10 @@ class OurTable extends AbstractBase
   constructor(props)
   {
     super(props);
+    var entries_per_pages = props.entries_per_pages;
+    if (entries_per_pages === undefined) {
+      entries_per_pages = [5, 10, 25, 50, 100];
+    }
     this.state = {
       rawData: [],
       data: [],
@@ -258,7 +374,9 @@ class OurTable extends AbstractBase
       disabled_button: false,
       tableid: props.tableid,
       total_entries: 0,
-      entries_per_page: 5,
+      entries_per_pages: entries_per_pages,
+      entries_per_page: entries_per_pages[0],
+      search_text: '',
       current_page: 1,
       first_page: 1,
       last_page: 1,
@@ -272,6 +390,9 @@ class OurTable extends AbstractBase
   componentWillUpdate(nextProps, nextState)
   {
     var isPageUpdate = false;
+    if (this.state.search_text !== nextState.search_text) {
+      this.searchItem(nextState);
+    }
     if (this.state.current_page !== nextState.current_page) {
       isPageUpdate = true;
     }
@@ -284,6 +405,19 @@ class OurTable extends AbstractBase
     if (isPageUpdate === true) {
       this.calculatePage(nextState);
     }
+  }
+
+  searchItem(nextState)
+  {
+    var data = [];
+    var regex = new RegExp(nextState.search_text);
+    nextState.rawData.forEach(function(raw) {
+      var text = JSON.stringify(raw);
+      if (regex.test(text) === true) {
+        data.push(raw);
+      }
+    }.bind(this));
+    this.setState({data: data});
   }
 
   calculatePage(nextState)
@@ -341,6 +475,16 @@ class OurTable extends AbstractBase
       previous_page: previous_page,
       next_page: next_page,
     });
+  }
+
+  handleChangeSearchText(e)
+  {
+    this.setState({search_text: e.target.value});
+  }
+
+  handleChangeEntriesPerPage(e)
+  {
+    this.setState({entries_per_page: e.target.value});
   }
 
   handleChange(page, e)
@@ -432,8 +576,8 @@ class OurTable extends AbstractBase
 
   destroyTable()
   {
-    var table = $('#'+this.state.tableid).dataTable();
-    table.fnDestroy();
+    // var table = $('#'+this.state.tableid).dataTable();
+    // table.fnDestroy();
   }
 
   handleClick(e)
@@ -445,8 +589,7 @@ class OurTable extends AbstractBase
 
   handleCreate(e)
   {
-    var newurl = location.protocol+'//'+location.hostname+location.pathname+"/create";
-    console.info(newurl);
+    var newurl = location.pathname + "/create";
     location.href = newurl;
   }
 
@@ -469,39 +612,9 @@ class OurTable extends AbstractBase
     return false;
   }
 
-  render()
+  returnDefaultProps(opt)
   {
-    var display_server_error = this.state.server_error ? "block" : "none";
-    var display_create = this.canAdd() ? "show" : "none";
-    var className = this.getName();
-    var classNameOfHeader = className + 'Header';
-    var classNameOfBody = className + 'Body';
-    var classNameOfPageFooter = className + 'PageFooter';
-    var classNameOfPageHeader = className + 'PageHeader';
-    var classOfHeader = eval(classNameOfHeader);
-    var classOfBody = eval(classNameOfBody);
-
-    var classOfPageFooter;
-    var classOfPageHeader;
-
-    var header = React.createElement(classOfHeader, {key: 'header'});
-    var body   = React.createElement(classOfBody, {
-      data: this.state.data,
-      key: 'body',
-      url_api: this.state.url_api
-    });
-
-    try {
-      classOfPageHeader = eval(classNameOfPageHeader);
-    } catch(e) {
-      classOfPageHeader = eval('OurTablePageHeader');
-    }
-    try {
-      classOfPageFooter = eval(classNameOfPageFooter);
-    } catch(e) {
-      classOfPageFooter = eval('OurTablePageFooter');
-    }
-    var pageFooter = React.createElement(classOfPageFooter, {
+    var props = jQuery.extend(true, {
       previous_page: this.state.previous_page,
       next_page: this.state.next_page,
       first: this.state.first,
@@ -509,18 +622,106 @@ class OurTable extends AbstractBase
       first_page: this.state.first_page,
       last_page: this.state.last_page,
       total_entries: this.state.total_entries,
+      entries_per_pages: this.state.entries_per_pages,
       entries_per_page: this.state.entries_per_page,
       current_page: this.state.current_page,
       handleChange: this.handleChange.bind(this),
       tableid: this.props.tableid,
       data: this.state.data,
-      key: 'page_footer',
-    });
-    var pageHeader = React.createElement(classOfPageHeader, {
-      tableid: this.props.tableid,
-      data: this.state.data,
-      key: 'page_header',
-    });
+      key: opt.key,
+      url_redirect: document.referrer,
+      url_api: this.state.url_api,
+      messages_prefix: this.props.messages_prefix,
+    }, opt);
+    return props;
+  }
+
+  returnPageFooter(opt)
+  {
+    var className = this.getName();
+    opt = jQuery.extend(true, {key: 'page_footer', className: className + 'PageFooter'}, opt === undefined ? {} : opt);
+    var classNameOfPageFooter = opt.className;
+    var classOfPageFooter;
+    try {
+      classOfPageFooter = eval(classNameOfPageFooter);
+    } catch(e) {
+      classOfPageFooter = eval('OurTablePageFooter');
+    }
+    var props = this.returnDefaultProps(opt);
+    props.formid = this.props.tableid + '-search-form1';
+    props.input_type = [];
+    var pageFooter = React.createElement(classOfPageFooter, props);
+    return pageFooter;
+  }
+
+  returnPageHeader(opt)
+  {
+    var className = this.getName();
+    opt = jQuery.extend(true, {key: 'page_header', className: className + 'PageHeader', button: false}, opt === undefined ? {} : opt);
+    var classNameOfPageHeader = opt.className;
+    var classOfPageHeader;
+    try {
+      classOfPageHeader = eval(classNameOfPageHeader);
+    } catch(e) {
+      classOfPageHeader = eval('OurTablePageHeader');
+    }
+    var props = this.returnDefaultProps(opt);
+    props.formid = this.props.tableid + '-search-form2';
+    props.input_type = [
+      {id: 'search', type: 'text'},
+      {id: 'entries_per_page', type: 'select'},
+    ];
+    props.handleClick = this.handleClick.bind(this);
+    props.handleCreate = this.handleCreate.bind(this);
+    props.handleChangeEntriesPerPage = this.handleChangeEntriesPerPage.bind(this);
+    props.handleChangeSearchText = this.handleChangeSearchText.bind(this);
+    var pageHeader = React.createElement(classOfPageHeader, props);
+    return pageHeader;
+  }
+
+  returnBody(opt)
+  {
+    var className = this.getName();
+    opt = jQuery.extend(true, {key: 'body', className: className + 'Body'}, opt === undefined ? {} : opt);
+    var classNameOfBody = opt.className;
+    var classOfBody;
+    try {
+      classOfBody = eval(classNameOfBody);
+    } catch(e) {
+      classOfBody = eval('OurTableBody');
+    }
+    var props = this.returnDefaultProps(opt);
+    var body   = React.createElement(classOfBody, props);
+    return body;
+  }
+
+  returnHeader(opt)
+  {
+    var className = this.getName();
+    opt = jQuery.extend(true, {key: 'header', className: className + 'Header'}, opt === undefined ? {} : opt);
+    var classNameOfHeader = opt.className;
+    var classOfHeader;
+    try {
+      classOfHeader = eval(classNameOfHeader);
+    } catch(e) {
+      classOfHeader = eval('OurTableHeader');
+    }
+    var props = this.returnDefaultProps(opt);
+    var body   = React.createElement(classOfHeader, props);
+    return body;
+  }
+
+  render()
+  {
+    var display_server_error = this.state.server_error ? "block" : "none";
+    var display_create = this.canAdd() ? "show" : "none";
+    var className = this.getName();
+    var classNameOfHeader = className + 'Header';
+    var classOfHeader = eval(classNameOfHeader);
+    var header = this.returnHeader({key: 'header'});
+    var body = this.returnBody({key: 'body'});
+    var pageFooter = this.returnPageFooter({key: 'page_footer'});
+    var pageHeader = this.returnPageHeader({key: 'page_header'});
 
     return (
       <div id={this.props.tableid + '-container'} role="content">
@@ -562,5 +763,7 @@ OurTable.propTypes = {
   url_api: React.PropTypes.string.isRequired,
   interval: React.PropTypes.number.isRequired,
   data: React.PropTypes.array,
-  tableid: React.PropTypes.string.isRequired
+  tableid: React.PropTypes.string.isRequired,
+  entries_per_pages: React.PropTypes.array.isRequired,
+  messages_prefix: React.PropTypes.string.isRequired,
 };

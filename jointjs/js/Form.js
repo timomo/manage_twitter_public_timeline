@@ -3,6 +3,19 @@ class Form extends AbstractBase
   constructor(props)
   {
     super(props);
+    var params = this.getParameters();
+    var datas = {
+    };
+    var invalids = {};
+
+    this.state = {
+      datas: datas,
+      url_api: props.url_api,
+      url_redirect: props.url_redirect,
+      server_error: null,
+      invalids: invalids,
+      disabled_button: false,
+    };
   }
 
   returnFormType()
@@ -396,6 +409,222 @@ class Form extends AbstractBase
     return defer.promise();
   }
 
+  returnObjectShow(id)
+  {
+    var url_api = this.props.url_api;
+    if (Boolean(this.state.url_api) !== false) {
+      url_api = this.state.url_api;
+    }
+    var url = url_api + "/" + id;
+
+    var ret = {
+      url: url,
+      dataType: 'json',
+      type: 'GET',
+      cache: false,
+      success: function(data) {
+        var data1 = jQuery.isPlainObject(data) === true ? data : {};
+        var datas = jQuery.extend(true, {}, this.state.datas, data);
+        this.setState({datas:datas});
+      }.bind(this),
+      error: function(xhr, status, err) {
+        console.error(status, err.toString());
+        var invalids = {};
+        this.setState({invalids: invalids});
+        if (422 === xhr.status) {
+          var responseJson = JSON.parse(xhr.responseText);
+          $.each(responseJson, function(id, value) {
+            var divid = "div_" + id;
+            var emid = "em_" + id;
+            $('#' + divid).addClass("state-error");
+            $('#' + emid).html(value.join(", "));
+            invalids[id] = (invalids[id] ? invalids[id] : '') + value.join(", ");
+          });
+          this.setState({invalids: invalids});
+        } else if (403 === xhr.status) {
+          this.setState({server_error: trans('messages.error.403')});
+        } else {
+          this.setState({server_error: trans('messages.error.500')});
+        }
+      }.bind(this)
+    };
+
+    return ret;
+  }
+
+  returnObjectCreate(e)
+  {
+    var params = this.returnSubmitDatas();
+    this.setState({disabled_button: true});
+    var token = this.returnCookieXSRFToken();
+
+    var url_api = this.props.url_api;
+    if (Boolean(this.state.url_api) !== false) {
+      url_api = this.state.url_api;
+    }
+    var url_redirect = this.props.url_redirect;
+    if (Boolean(this.state.url_redirect) !== false) {
+      url_redirect = this.state.url_redirect;
+    }
+
+    var ret = {
+      url: url_api,
+      headers: {'X-XSRF-TOKEN': token},
+      dataType: 'json',
+      type: 'POST',
+      data: params,
+      success: function(data) {
+        this.setState({server_error: ''});
+        location.href = url_redirect;
+      }.bind(this),
+      error: function(xhr, status, err) {
+        console.error(status, err.toString());
+        var invalids = {};
+        this.setState({invalids: invalids});
+        if (422 === xhr.status) {
+          var responseJson = JSON.parse(xhr.responseText);
+          $.each(responseJson, function(id, value) {
+            var divid = "div_" + id;
+            var emid = "em_" + id;
+            $('#' + divid).addClass("state-error");
+            $('#' + emid).html(value.join(", "));
+            invalids[id] = (invalids[id] ? invalids[id] : '') + value.join(", ");
+          });
+          this.setState({invalids: invalids});
+        } else if (403 === xhr.status) {
+          this.setState({server_error: trans('messages.error.403')});
+        } else {
+          this.setState({server_error: trans('messages.error.500')});
+        }
+      }.bind(this),
+      complete: function(xhr, status) {
+        if (jQuery('#' + this.props.formid + '-modal').size() !== 0) {
+          $('#' + this.props.formid +'-modal').modal('hide');
+        } else {
+          $('#myModal').modal('hide');
+        }
+        this.setState({disabled_button: false});
+      }.bind(this)
+    };
+
+    return ret;
+  }
+
+  returnObjectUpdate(e)
+  {
+    var params = this.returnSubmitDatas();
+    this.setState({disabled_button: true});
+    var token = this.returnCookieXSRFToken();
+
+    var url_api = this.props.url_api;
+    if (Boolean(this.state.url_api) !== false) {
+      url_api = this.state.url_api;
+    }
+    var url_redirect = this.props.url_redirect;
+    if (Boolean(this.state.url_redirect) !== false) {
+      url_redirect = this.state.url_redirect;
+    }
+    var url = url_api + "/" + this.getMyId();
+    var ret = {
+      url: url,
+      headers: {'X-XSRF-TOKEN': token},
+      dataType: 'json',
+      type: 'PUT',
+      data: params,
+      success: function(data) {
+        this.setState({server_error: ''});
+        location.href = url_redirect;
+      }.bind(this),
+      error: function(xhr, status, err) {
+        console.error(status, err.toString());
+        var invalids = {};
+        this.setState({invalids: invalids});
+        if (422 === xhr.status) {
+          var responseJson = JSON.parse(xhr.responseText);
+          $.each(responseJson, function(id, value) {
+            var divid = "div_" + id;
+            var emid = "em_" + id;
+            $('#' + divid).addClass("state-error");
+            $('#' + emid).html(value.join(", "));
+            invalids[id] = (invalids[id] ? invalids[id] : '') + value.join(", ");
+          });
+          this.setState({invalids: invalids});
+        } else if (403 === xhr.status) {
+          this.setState({server_error: trans('messages.error.403')});
+        } else {
+          this.setState({server_error: trans('messages.error.500')});
+        }
+      }.bind(this),
+      complete: function(xhr, status) {
+        if (jQuery('#' + this.props.formid + '-modal').size() !== 0) {
+          $('#' + this.props.formid +'-modal').modal('hide');
+        } else {
+          $('#myModal').modal('hide');
+        }
+        this.setState({disabled_button: false});
+      }.bind(this)
+    };
+
+    return ret;
+  }
+
+  returnObjectDelete(e)
+  {
+    var url_api = this.props.url_api;
+    if (Boolean(this.state.url_api) !== false) {
+      url_api = this.state.url_api;
+    }
+    var url_redirect = this.props.url_redirect;
+    if (Boolean(this.state.url_redirect) !== false) {
+      url_redirect = this.state.url_redirect;
+    }
+    var url = url_api + "/" + this.getMyId();
+    var params = {};
+    this.setState({disabled_button: true});
+    var token = this.returnCookieXSRFToken();
+    var ret = {
+      url: url,
+      headers: {'X-XSRF-TOKEN': token},
+      dataType: 'json',
+      type: 'DELETE',
+      data: params,
+      success: function(data) {
+        this.setState({server_error: ''});
+        location.href = url_redirect;
+      }.bind(this),
+      error: function(xhr, status, err) {
+        console.error(status, err.toString());
+        var invalids = {};
+        this.setState({invalids: invalids});
+        if (422 === xhr.status) {
+          var responseJson = JSON.parse(xhr.responseText);
+          $.each(responseJson, function(id, value) {
+            var divid = "div_" + id;
+            var emid = "em_" + id;
+            $('#' + divid).addClass("state-error");
+            $('#' + emid).html(value.join(", "));
+            invalids[id] = (invalids[id] ? invalids[id] : '') + value.join(", ");
+          });
+          this.setState({invalids: invalids});
+        } else if (403 === xhr.status) {
+          this.setState({server_error: trans('messages.error.403')});
+        } else {
+          this.setState({server_error: trans('messages.error.500')});
+        }
+      }.bind(this),
+      complete: function(xhr, status) {
+        if (jQuery('#' + this.props.formid + '-modal-del').size() !== 0) {
+          $('#' + this.props.formid +'-modal-del').modal('hide');
+        } else {
+          $('#myModalDel').modal('hide');
+        }
+        this.setState({disabled_button: false});
+      }.bind(this)
+    };
+
+    return ret;
+  }
+
   handleUpdate(e)
   {
     var params = this.returnSubmitDatas();
@@ -466,7 +695,6 @@ class Form extends AbstractBase
         var params = {};
         this.setState({disabled_button: true});
         var token = this.returnCookieXSRFToken();
-        //params['_token'] = ('undefined' !== typeof this.state.datas['_token']) ? this.state.datas['_token'] : $("#csrf-token").attr('value');
 
         $.ajax({
             url: url,
@@ -1080,7 +1308,7 @@ class Form extends AbstractBase
         result = this.renderDatePickerInput(datas, arguments[1], arguments[2], option);
         break;
       case "password":
-        result = this.renderPasswordInput(datas, arguments[2], option);
+        result = this.renderPasswordInput(datas, arguments[1], option);
         break;
       case "file":
         result = this.renderFileInput(datas, arguments[1], option);
@@ -1505,6 +1733,99 @@ class Form extends AbstractBase
                 </div>
     return this.renderLabelFieldToDatasObject(tmp, option);
   }
+
+    setDatepickerVal(prime, second='')
+    {
+	var _this = this;
+	$('#'+prime).datepicker({
+            dateFormat: 'yy-mm-dd',
+            prevText: '<i class="fa fa-chevron-left"></i>',
+            nextText: '<i class="fa fa-chevron-right"></i>',
+            onClose: function (selectedDate) {
+		var datas = _this.state.datas;
+		datas[prime] = selectedDate;
+		_this.setState({datas: datas});
+		if ('' !== second) {
+		    $('#'+second).datepicker("option", "minDate", selectedDate);
+		}
+            }
+	});
+    }
+
+    setTimepickerVal(key)
+    {
+	var _this = this;
+	$('#'+key).timepicker(
+            {
+		showMeridian: false,
+		defaultTime: false
+            }
+	).on('changeTime.timepicker', function(e) {
+            var datas = _this.state.datas;
+            datas[key] = e.time.value;
+            _this.setState({datas: datas});
+	});
+    }
+
+    renderInputValidityPeriod(datasObj, start_date, start_time, end_date, end_time)
+    {
+	return (
+          <section>
+            <div className="row">
+              <label className="label col col-2">
+                {trans('messages.form.available_period')}
+              </label>
+              <div className="col col-10 inline-group">
+                <div className="col col-3">
+                  {this.renderDatePickerInput(datasObj[start_date], null, '', {section: false, label: false})}
+                </div>
+                <div className="col col-2">
+                  {this.renderTimePickerInput(datasObj[start_time], '')}
+                </div>
+                <div className="col col-2">
+                  {trans('messages.form.between')}
+                </div>
+                <div className="col col-3">
+                  {this.renderDatePickerInput(datasObj[end_date], null, '', {section: false, label: false})}
+                </div>
+                <div className="col col-2">
+                  {this.renderTimePickerInput(datasObj[end_time], '')}
+                </div>
+              </div>
+            </div>
+          </section>
+        );
+    }
+
+    renderLabelValidityPeriod(datasObj, start_date, start_time, end_date, end_time)
+    {
+	return (
+          <section>
+            <div className="row">
+              <label className="label col col-2">
+                {trans('messages.form.available_period')}
+              </label>
+              <div className="col col-10 inline-group">
+                <div className="col col-3">
+                  {this.renderLabelForDatePickerInput(datasObj[start_date], null, '', {section: false, label: false})}
+                </div>
+                <div className="col col-2">
+                  {this.renderLabelForTimePickerInput(datasObj[start_time], '')}
+                </div>
+                <div className="col col-2">
+                  {trans('messages.form.between')}
+                </div>
+                <div className="col col-3">
+                  {this.renderLabelForDatePickerInput(datasObj[end_date], null, '', {section: false, label: false})}
+                </div>
+                <div className="col col-2">
+                  {this.renderLabelForTimePickerInput(datasObj[end_time], '')}
+                </div>
+              </div>
+            </div>
+          </section>
+	);
+    }
 
     render() {
         return false;
