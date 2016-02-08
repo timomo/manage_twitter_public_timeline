@@ -407,16 +407,84 @@ class OurTable extends AbstractBase
     }
   }
 
-  searchItem(nextState)
+  parse(string)
+  {
+    string = string.trim().replace(/\s+/g, ' ');
+    // @see https://github.com/nepsilon/search-query-parser/blob/master/lib/search-query-parser.js#L31
+    var query = {text: []};
+    var terms = string.match(/(\S+:'(?:[^'\\]|\\.)*')|(\S+:"(?:[^"\\]|\\.)*")|\S+|\S+:\S+/g);
+    if (!terms) {
+      terms = [];
+    }
+    for (var i = 0; i < terms.length; i++) {
+      var term = terms[i];
+      var idx = term.indexOf(':');
+      if (idx === -1) {
+        query.text.push(term);
+      } else {
+        var key = term.slice(0, idx);
+        var value = term.slice(idx + 1);
+        query[key] = value;
+      }
+    };
+    if (query.text.length) {
+      query.text = query.text.join(' ').trim();
+    } else {
+      delete query.text;
+    }
+    return query;
+  }
+
+  formattingQuery(cond)
+  {
+    return cond;
+  }
+
+  query(cond, data)
+  {
+    var keys = Object.keys(cond);
+    if (keys.length === 0) {
+      return true;
+    }
+    var len = keys.length;
+    var hit = 0;
+    for (var i = 0; i < len; i++) {
+      var key = keys[i];
+      if (key === 'text') {
+        var regex = new RegExp(cond[key]);
+        var text = JSON.stringify(data);
+        if (regex.test(text) === true) {
+          hit += 1;
+        }
+      } else {
+        if (data[key] == cond[key]) {
+          hit += 1;
+        }
+      }
+    }
+    if (hit === len) {
+      return true;
+    }
+    return false;
+  }
+
+  returnFilterRow(query, rows)
   {
     var data = [];
-    var regex = new RegExp(nextState.search_text);
-    nextState.rawData.forEach(function(raw) {
-      var text = JSON.stringify(raw);
-      if (regex.test(text) === true) {
-        data.push(raw);
+    rows.forEach(function(row, i) {
+      var bool = this.query(query, row);
+      if (bool === true) {
+        data.push(row);
       }
     }.bind(this));
+    return data;
+  }
+
+  searchItem(nextState)
+  {
+    var query = this.parse(nextState.search_text);
+    query = this.formattingQuery(query);
+    var data = this.returnFilterRow(query, nextState.rawData);
     this.setState({data: data});
   }
 

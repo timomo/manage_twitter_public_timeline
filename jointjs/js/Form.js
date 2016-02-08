@@ -424,7 +424,7 @@ class Form extends AbstractBase
       cache: false,
       success: function(data) {
         var data1 = jQuery.isPlainObject(data) === true ? data : {};
-        var datas = jQuery.extend(true, {}, this.state.datas, data);
+        var datas = jQuery.extend(true, {}, this.state.datas, data1);
         this.setState({datas:datas});
       }.bind(this),
       error: function(xhr, status, err) {
@@ -1825,6 +1825,30 @@ class Form extends AbstractBase
             </div>
           </section>
 	);
+    }
+
+    renderInputValidityPeriodOnlyTime(datasObj, start_time, end_time)
+    {
+	return (
+          <section>
+            <div className="row">
+              <label className="label col col-2">
+                {trans('messages.form.available_period')}
+              </label>
+              <div className="col col-10 inline-group">
+                <div className="col col-2">
+                  {this.renderTimePickerInput(datasObj[start_time], '')}
+                </div>
+                <div className="col col-2">
+                  {trans('messages.form.between')}
+                </div>
+                <div className="col col-2">
+                  {this.renderTimePickerInput(datasObj[end_time], '')}
+                </div>
+              </div>
+            </div>
+          </section>
+        );
     }
 
     render() {
