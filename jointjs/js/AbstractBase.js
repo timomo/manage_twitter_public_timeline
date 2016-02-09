@@ -19,11 +19,22 @@ class AbstractBase extends React.Component
 
     getParameters()
     {
-        var arg = new Object;
+        var arg = {};
         var pair = location.search.substring(1).split('&');
         for(var i=0; pair[i]; i++) {
             var kv = pair[i].split('=');
-            arg[kv[0]] = kv[1];
+            var key = decodeURIComponent(kv[0]);
+            var value = kv[1];
+            if (key in arg) {
+              if (jQuery.isArray(arg[key]) === true) {
+                arg[key].push(value);
+              } else {
+                arg[key] = [arg[key]];
+                arg[key].push(value);
+              }
+            } else {
+              arg[key] = value;
+            }
         }
         return arg;
     }
@@ -193,5 +204,14 @@ class AbstractBase extends React.Component
       }
     });
     return ret;
+  }
+
+  uniqueArray(array)
+  {
+    var map = {};
+    array.forEach(function(id) {
+      map[id] = true;
+    }.bind(this));
+    return Object.keys(map);
   }
 }

@@ -172,16 +172,6 @@ class Form extends AbstractBase
     return ret;
   }
 
-    getParameters() {
-        var arg = new Object;
-        var pair = location.search.substring(1).split('&');
-        for(var i=0; pair[i]; i++) {
-            var kv = pair[i].split('=');
-            arg[kv[0]] = kv[1];
-        }
-        return arg;
-    }
-
     // http://192.168.50.15/orion/user/21/edit ---> 21
     getMyId() {
         var user_id = location.pathname.replace(/\/edit$/, "").match(/\d+$/).join("");
@@ -407,6 +397,49 @@ class Form extends AbstractBase
     });
 
     return defer.promise();
+  }
+
+  returnObjectIndex()
+  {
+    var url_api = this.props.url_api;
+    if (Boolean(this.state.url_api) !== false) {
+      url_api = this.state.url_api;
+    }
+    var url = url_api;
+
+    var ret = {
+      url: url,
+      dataType: 'json',
+      type: 'GET',
+      cache: false,
+      success: function(data) {
+        var data1 = jQuery.isPlainObject(data) === true ? data : {};
+        var datas = jQuery.extend(true, {}, this.state.datas, data1);
+        this.setState({datas:datas});
+      }.bind(this),
+      error: function(xhr, status, err) {
+        console.error(status, err.toString());
+        var invalids = {};
+        this.setState({invalids: invalids});
+        if (422 === xhr.status) {
+          var responseJson = JSON.parse(xhr.responseText);
+          $.each(responseJson, function(id, value) {
+            var divid = "div_" + id;
+            var emid = "em_" + id;
+            $('#' + divid).addClass("state-error");
+            $('#' + emid).html(value.join(", "));
+            invalids[id] = (invalids[id] ? invalids[id] : '') + value.join(", ");
+          });
+          this.setState({invalids: invalids});
+        } else if (403 === xhr.status) {
+          this.setState({server_error: trans('messages.error.403')});
+        } else {
+          this.setState({server_error: trans('messages.error.500')});
+        }
+      }.bind(this)
+    };
+
+    return ret;
   }
 
   returnObjectShow(id)

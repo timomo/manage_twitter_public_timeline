@@ -387,6 +387,17 @@ class OurTable extends AbstractBase
     };
   }
 
+  returnRawDataById(id)
+  {
+    var rawData = this.state.rawData;
+    for (var i = 0; i < rawData.length; i++) {
+      var row = rawData[i];
+      if (row.id === id) {
+        return row;
+      }
+    }
+  }
+
   componentWillUpdate(nextProps, nextState)
   {
     var isPageUpdate = false;
@@ -407,32 +418,104 @@ class OurTable extends AbstractBase
     }
   }
 
-  parse(string)
+  // @see https://github.com/nepsilon/search-query-parser/blob/master/lib/search-query-parser.js
+  parse(string, options)
   {
+    if (!options) {
+      options = {};
+    }
     string = string.trim().replace(/\s+/g, ' ');
-    // @see https://github.com/nepsilon/search-query-parser/blob/master/lib/search-query-parser.js#L31
     var query = {text: []};
-    var terms = string.match(/(\S+:'(?:[^'\\]|\\.)*')|(\S+:"(?:[^"\\]|\\.)*")|\S+|\S+:\S+/g);
-    if (!terms) {
-      terms = [];
-    }
-    for (var i = 0; i < terms.length; i++) {
-      var term = terms[i];
-      var idx = term.indexOf(':');
-      if (idx === -1) {
-        query.text.push(term);
-      } else {
-        var key = term.slice(0, idx);
-        var value = term.slice(idx + 1);
-        query[key] = value;
-      }
-    };
-    if (query.text.length) {
-      query.text = query.text.join(' ').trim();
+    if (-1 === string.indexOf(':')) {
+      query.text = string;
+      return query;
+    } else if (!options.keywords && !options.ranges) {
+      query.text = string;
+      return query;
     } else {
-      delete query.text;
+      var terms = string.match(/(\S+:'(?:[^'\\]|\\.)*')|(\S+:"(?:[^"\\]|\\.)*")|\S+|\S+:\S+/g);
+      for (var i = 0; i < terms.length; i++) {
+        var sepIndex = terms[i].indexOf(':');
+        if(sepIndex !== -1) {
+          var split = terms[i].split(':'),
+              key = terms[i].slice(0, sepIndex),
+              val = terms[i].slice(sepIndex + 1);
+          val = val.replace(/^\"|\"$|^\'|\'$/g, '');
+          val = (val + '').replace(/\\(.?)/g, function (s, n1) {
+            switch (n1) {
+            case '\\':
+              return '\\';
+            case '0':
+              return '\u0000';
+            case '':
+              return '';
+            default:
+              return n1;
+            }
+          });
+          terms[i] = key + ':' + val;
+        }
+      };
+      terms.reverse();
+      var term;
+      while (term = terms.pop()) {
+        var sepIdx = term.indexOf(':');
+        if (-1 === sepIdx) {
+          query.text.push(term);
+        } else {
+          var key = term.slice(0, sepIdx);
+          options.keywords = options.keywords || [];
+          var isKeyword = !(-1 === options.keywords.indexOf(key));
+          options.ranges = options.ranges || [];
+          var isRange = !(-1 === options.ranges.indexOf(key));
+          if (isKeyword) {
+            var value = term.slice(sepIdx + 1);
+            if (value.length) {
+              var values = value.split(',');
+              if (query[key]) {
+                if (query[key] instanceof Array) {
+                  if (values.length > 1) {
+                    query[key] = query[key].concat(values);
+                  } else {
+                    query[key].push(value);
+                  }
+                } else {
+                  query[key] = [query[key]]
+                  query[key].push(value);
+                }
+              } else {
+                if (values.length > 1) {
+                  query[key] = values;
+                } else {
+                  query[key] = value;
+                }
+              }
+             }
+          } else if (isRange) {
+            var value = term.slice(sepIdx + 1);
+            var rangeValues = value.split('-');
+            query[key] = {};
+            if (2 === rangeValues.length) {
+              query[key].from = rangeValues[0];
+              query[key].to = rangeValues[1];
+            } else if (!rangeValues.length % 2) {
+            } else {
+              query[key].from = value;
+            }
+          } else {
+            query.text.push(term);
+          }
+        }
+      }
+
+      if (query.text.length) {
+        query.text = query.text.join(' ').trim();
+      } else {
+        delete query.text;
+      }
+
+      return query;
     }
-    return query;
   }
 
   formattingQuery(cond)
@@ -482,7 +565,13 @@ class OurTable extends AbstractBase
 
   searchItem(nextState)
   {
-    var query = this.parse(nextState.search_text);
+    var options = {};
+    if (nextState.rawData.length > 0) {
+      var row = nextState.rawData[0];
+      var keys = Object.keys(row);
+      options.keywords = keys;
+    }
+    var query = this.parse(nextState.search_text, options);
     query = this.formattingQuery(query);
     var data = this.returnFilterRow(query, nextState.rawData);
     this.setState({data: data});
@@ -709,12 +798,7 @@ class OurTable extends AbstractBase
     var className = this.getName();
     opt = jQuery.extend(true, {key: 'page_footer', className: className + 'PageFooter'}, opt === undefined ? {} : opt);
     var classNameOfPageFooter = opt.className;
-    var classOfPageFooter;
-    try {
-      classOfPageFooter = eval(classNameOfPageFooter);
-    } catch(e) {
-      classOfPageFooter = eval('OurTablePageFooter');
-    }
+    var classOfPageFooter = classNameOfPageFooter in window === true ? window[classNameOfPageFooter] : window['OurTablePageFooter'];
     var props = this.returnDefaultProps(opt);
     props.formid = this.props.tableid + '-search-form1';
     props.input_type = [];
@@ -727,12 +811,7 @@ class OurTable extends AbstractBase
     var className = this.getName();
     opt = jQuery.extend(true, {key: 'page_header', className: className + 'PageHeader', button: false}, opt === undefined ? {} : opt);
     var classNameOfPageHeader = opt.className;
-    var classOfPageHeader;
-    try {
-      classOfPageHeader = eval(classNameOfPageHeader);
-    } catch(e) {
-      classOfPageHeader = eval('OurTablePageHeader');
-    }
+    var classOfPageHeader = classNameOfPageHeader in window === true ? window[classNameOfPageHeader] : window['OurTablePageHeader'];
     var props = this.returnDefaultProps(opt);
     props.formid = this.props.tableid + '-search-form2';
     props.input_type = [
@@ -752,12 +831,7 @@ class OurTable extends AbstractBase
     var className = this.getName();
     opt = jQuery.extend(true, {key: 'body', className: className + 'Body'}, opt === undefined ? {} : opt);
     var classNameOfBody = opt.className;
-    var classOfBody;
-    try {
-      classOfBody = eval(classNameOfBody);
-    } catch(e) {
-      classOfBody = eval('OurTableBody');
-    }
+    var classOfBody = classNameOfBody in window === true ? window[classNameOfBody] : window['OurTableBody'];
     var props = this.returnDefaultProps(opt);
     var body   = React.createElement(classOfBody, props);
     return body;
@@ -768,12 +842,7 @@ class OurTable extends AbstractBase
     var className = this.getName();
     opt = jQuery.extend(true, {key: 'header', className: className + 'Header'}, opt === undefined ? {} : opt);
     var classNameOfHeader = opt.className;
-    var classOfHeader;
-    try {
-      classOfHeader = eval(classNameOfHeader);
-    } catch(e) {
-      classOfHeader = eval('OurTableHeader');
-    }
+    var classOfHeader = classNameOfHeader in window === true ? window[classNameOfHeader] : window['OurTableHeader'];
     var props = this.returnDefaultProps(opt);
     var body   = React.createElement(classOfHeader, props);
     return body;
@@ -785,7 +854,6 @@ class OurTable extends AbstractBase
     var display_create = this.canAdd() ? "show" : "none";
     var className = this.getName();
     var classNameOfHeader = className + 'Header';
-    var classOfHeader = eval(classNameOfHeader);
     var header = this.returnHeader({key: 'header'});
     var body = this.returnBody({key: 'body'});
     var pageFooter = this.returnPageFooter({key: 'page_footer'});
