@@ -525,6 +525,7 @@ class OurTable extends AbstractBase
 
   query(cond, data)
   {
+console.log(cond);
     var keys = Object.keys(cond);
     if (keys.length === 0) {
       return true;
@@ -540,8 +541,17 @@ class OurTable extends AbstractBase
           hit += 1;
         }
       } else {
-        if (data[key] == cond[key]) {
-          hit += 1;
+        if (jQuery.isArray(cond[key]) === true) {
+          for (var a = 0; a < cond[key].length; a++) {
+            if (data[key] == cond[key][a]) {
+              hit += 1;
+              break;
+            }
+          }
+        } else {
+          if (data[key] == cond[key]) {
+            hit += 1;
+          }
         }
       }
     }

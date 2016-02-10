@@ -1152,11 +1152,16 @@ class Form extends AbstractBase
     }
     var tmp = jQuery.extend(true, {}, datas);
     var value1 = jQuery.isArray(datas.value) === true ? datas.value : [];
-    var options1 = value1.map(function(name){
-      return <option key={name} value={name}>{values[name]}</option>
+    var options1 = [];
+    value1.forEach(function(name){
+      options1.push(<option key={name} value={name}>{values[name]}</option>);
     });
-    var options2 = Object.keys(values).map(function(name, value){
-      return <option key={name} value={name}>{values[name]}</option>
+    var options2 = [];
+    Object.keys(values).forEach(function(name, value){
+      if (jQuery.inArray(name, value1) !== -1) {
+        return true;
+      }
+      options2.push(<option key={name} value={name}>{values[name]}</option>);
     });
     var label = datas.label + " " + (this.state.invalids[datas.id] ? 'state-error' : '');
     tmp.cols = [2, 4, 2, 4];
@@ -1738,6 +1743,9 @@ class Form extends AbstractBase
     var tmp = jQuery.extend(true, {}, datas);
     var options = {};
     jQuery('#' + datas.id + '_dummy' + ' option').each(function(num, option) {
+      options[option.value] = option.text;
+    });
+    jQuery('#' + datas.id + ' option').each(function(num, option) {
       options[option.value] = option.text;
     });
     var lis = datas.value.map(function(id) {
