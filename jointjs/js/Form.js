@@ -597,7 +597,6 @@ class Form extends AbstractBase
         this.setState({disabled_button: false});
       }.bind(this)
     };
-
     return ret;
   }
 
@@ -1260,16 +1259,24 @@ class Form extends AbstractBase
     var self = this;
     var label = datas.label + " " + (this.state.invalids[datas.id] ? 'state-error' : '');
     var timeinput = jQuery.isPlainObject(timer) === true ? this.renderTimePickerInput(timer) : null;
-    tmp.field = <label className={label}>
-                  <input id={datas.id} type="text" name={datas.id}
-                    placeholder={datas.tooltip} className="form-control" data-dateformat="yyyy-mm-dd" value={datas.value}
-                  />
-                  {timeinput}
-                  <i></i>
-                  <em className="invalids">{this.state.invalids[datas.id]}</em>
-                </label>;
+    tmp.field = [
+      <label className={label}>
+        <input id={datas.id} type="text" name={datas.id}
+          placeholder={datas.tooltip} className="form-control" data-dateformat="yyyy-mm-dd" value={datas.value}
+        />
+        <i></i>
+        <em className="invalids">{this.state.invalids[datas.id]}</em>
+      </label>
+    ];
+    if (timeinput !== null) {
+      tmp.field.push({timeinput});
+    }
+
     if (tmp.hasOwnProperty('cols') === false) {
       tmp.cols = [2, 5];
+      if (timeinput !== null) {
+        tmp.cols = [2, 5, 5];
+      }
     }
     return this.renderIconFieldToDatasObject(tmp, option)
   }
@@ -2053,6 +2060,7 @@ class Form extends AbstractBase
 
   executeValidation(rules)
   {
+    var datasObj = this.returnDatasObject();
     this.initializeValidatorMethod();
     var message_templates = this.returnValidationMessageTemplates();
     var messages = {};
@@ -2082,7 +2090,11 @@ class Form extends AbstractBase
       Object.keys(rule_hash).map(function(rule) {
         var param = rule_hash[rule];
         var msg = message_templates[user_language][rule];
-        msg = msg.replace(":attribute", trans(messages_prefix + '.form.' + column));
+        // msg = msg.replace(":attribute", trans(messages_prefix + '.form.' + column));
+        if (datasObj[column] === undefined) {
+          console.warn('not found column: ' + column);
+        }
+        msg = msg.replace(":attribute", datasObj[column] === undefined ? '' : datasObj[column].title);
         msg = msg.replace(":max", param);
         message_hash[rule] = msg;
       });

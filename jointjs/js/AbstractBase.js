@@ -196,6 +196,9 @@ class AbstractBase extends React.Component
     if (sep === undefined || sep === null) {
       sep = <span> </span>;
     }
+    if (jQuery.isArray(array) === false) {
+      array = [];
+    }
     var ret = [];
     array.forEach(function(row, i) {
       ret.push(row);

@@ -525,7 +525,6 @@ class OurTable extends AbstractBase
 
   query(cond, data)
   {
-console.log(cond);
     var keys = Object.keys(cond);
     if (keys.length === 0) {
       return true;
@@ -661,6 +660,74 @@ console.log(cond);
       return null;
     }
     this.setState({current_page: page});
+  }
+
+  getMyId()
+  {
+    return '';
+  }
+
+  returnSubmitDatas()
+  {
+    var datas = {};
+    return datas;
+  }
+
+  returnObjectUpdate(e)
+  {
+    var params = this.returnSubmitDatas();
+    this.setState({disabled_button: true});
+    var token = this.returnCookieXSRFToken();
+
+    var url_api = this.props.url_api;
+    if (Boolean(this.state.url_api) !== false) {
+      url_api = this.state.url_api;
+    }
+    var url_redirect = this.props.url_redirect;
+    if (Boolean(this.state.url_redirect) !== false) {
+      url_redirect = this.state.url_redirect;
+    }
+    var url = url_api + "/" + this.getMyId();
+    var ret = {
+      url: url,
+      headers: {'X-XSRF-TOKEN': token},
+      dataType: 'json',
+      type: 'PUT',
+      data: params,
+      success: function(data) {
+        this.setState({server_error: ''});
+        location.href = url_redirect;
+      }.bind(this),
+      error: function(xhr, status, err) {
+        console.error(status, err.toString());
+        var invalids = {};
+        this.setState({invalids: invalids});
+        if (422 === xhr.status) {
+          var responseJson = JSON.parse(xhr.responseText);
+          $.each(responseJson, function(id, value) {
+            var divid = "div_" + id;
+            var emid = "em_" + id;
+            $('#' + divid).addClass("state-error");
+            $('#' + emid).html(value.join(", "));
+            invalids[id] = (invalids[id] ? invalids[id] : '') + value.join(", ");
+          });
+          this.setState({invalids: invalids});
+        } else if (403 === xhr.status) {
+          this.setState({server_error: trans('messages.error.403')});
+        } else {
+          this.setState({server_error: trans('messages.error.500')});
+        }
+      }.bind(this),
+      complete: function(xhr, status) {
+        if (jQuery('#' + this.props.formid + '-modal').size() !== 0) {
+          $('#' + this.props.formid +'-modal').modal('hide');
+        } else {
+          $('#myModal').modal('hide');
+        }
+        this.setState({disabled_button: false});
+      }.bind(this)
+    };
+    return ret;
   }
 
   loadFromServer()
