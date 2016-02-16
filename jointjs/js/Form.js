@@ -990,10 +990,26 @@ class Form extends AbstractBase
         </label>
       )
     });
+
+    var label = <label className="label col col-2">{datas.title}</label>;
+
+    if (option.label === false) {
+      label = null;
+    }
+    if (option.section === false) {
+      return (
+        <div>
+          {label}
+          <div className="col col-10 inline-group">
+            {options}
+          </div>
+        </div>
+      );
+    }
     return (
       <section>
         <div className="row">
-          <label className="label col col-2">{datas.title}</label>
+          {label}
           <div className="col col-10 inline-group">
             {options}
           </div>

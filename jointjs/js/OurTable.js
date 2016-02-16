@@ -375,7 +375,7 @@ class OurTable extends AbstractBase
       tableid: props.tableid,
       total_entries: 0,
       entries_per_pages: entries_per_pages,
-      entries_per_page: entries_per_pages[0],
+      entries_per_page: entries_per_page,
       search_text: '',
       current_page: 1,
       first_page: 1,
@@ -384,6 +384,7 @@ class OurTable extends AbstractBase
       last: 1,
       previous_page: null,
       next_page: null,
+      serverSide: Boolean(props.serverSide) === false ? false : props.serverSide,
     };
   }
 
