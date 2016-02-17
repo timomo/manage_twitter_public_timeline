@@ -1576,19 +1576,10 @@ class Form extends AbstractBase
       if (i === 1) {
         fields.push(
           <div className={grid[i].join(' ')}>
-            {(tooltip == '' ? function() {
-              return <label className={label}>
+              <label className={label}>
                 <i className={icon}></i>
                 {field[i]}
               </label>
-            } : function() {
-              return <label className={label}>
-                <i className={icon}></i>
-                {field[i]}
-                <b className="tooltip tooltip-bottom-right">{tooltip}</b>
-                <em className="invalids">{this.state.invalids[id]}</em>
-              </label>
-            }).call(this)}
           </div>
         );
       } else {

@@ -304,7 +304,7 @@ class OurTablePageFooter extends Form
     return (
       <li
         className={"paginate_button previous " + disable_previous_page}
-        onClick={this.props.handleChange.bind(this, this.props.previous_page)}
+        onClick={this.props.handleChangePreviousPage.bind(this, this.props.previous_page)}
         aria-controls={this.props.tableid + "-table"}
         tabIndex="0"
         id={this.props.formid + "-table_previous"}
@@ -320,7 +320,7 @@ class OurTablePageFooter extends Form
     return (
       <li
         className={"paginate_button next " + disable_next_page}
-        onClick={this.props.handleChange.bind(this, this.props.next_page)}
+        onClick={this.props.handleChangeNextPage.bind(this, this.props.next_page)}
         aria-controls={this.props.tableid + "-table"}
         tabIndex="0"
         id={this.props.tableid + "-table_next"}
@@ -526,6 +526,9 @@ class OurTable extends AbstractBase
 
   query(cond, data)
   {
+    if (data === undefined) {
+      return false;
+    }
     var keys = Object.keys(cond);
     if (keys.length === 0) {
       return true;
@@ -663,6 +666,16 @@ class OurTable extends AbstractBase
     this.setState({current_page: page});
   }
 
+  handleChangeNextPage(page, e)
+  {
+    this.handleChange(page, e);
+  }
+
+  handleChangePreviousPage(page, e)
+  {
+    this.handleChange(page, e);
+  }
+
   getMyId()
   {
     return '';
@@ -731,12 +744,41 @@ class OurTable extends AbstractBase
     return ret;
   }
 
-  loadFromServer()
+  returnObjectIndex()
   {
     var url_api = this.props.url_api;
     if (Boolean(this.state.url_api) !== false) {
       url_api = this.state.url_api;
     }
+
+    var ret = {
+      url: url_api,
+      dataType: 'json',
+      type: 'GET',
+      cache: false,
+      success: function(data, status, xhr) {
+        this.setState({rawData: data});
+        this.setState({total_entries: data.length});
+      }.bind(this),
+      error: function(xhr, status, err) {
+        if (422 === xhr.status) {
+          var responseJson = JSON.parse(xhr.responseText);
+          this.setState({server_error: trans('messages.error.422')});
+        } else if (403 === xhr.status) {
+          this.setState({server_error: trans('messages.error.403')});
+        } else {
+          this.setState({server_error: trans('messages.error.500')});
+        }
+        console.error(this.state.url_api, status, err.toString());
+      }.bind(this)
+    };
+
+    return ret;
+  }
+
+  loadFromServer()
+  {
+    var param = this.returnObjectShow(1);
     var defer = $.Deferred();
 
     if (this.canGet() === false) {
@@ -747,28 +789,19 @@ class OurTable extends AbstractBase
       return defer.promise();
     }
 
-    $.ajax({
-      url: url_api,
-      dataType: 'json',
-      cache: false,
-    })
-    .done(function(data) {
-      this.setState({rawData: data});
-      this.setState({total_entries: data.length});
+    var success = param.success;
+    var error = param.error;
+
+    param.success = function(data, status, xhr) {
+      success(data, status, xhr);
       defer.resolve(data);
-    }.bind(this))
-    .fail(function(xhr, status, err) {
-      if (422 === xhr.status) {
-        var responseJson = JSON.parse(xhr.responseText);
-        this.setState({server_error: trans('messages.error.422')});
-      } else if (403 === xhr.status) {
-        this.setState({server_error: trans('messages.error.403')});
-      } else {
-        this.setState({server_error: trans('messages.error.500')});
-      }
-      console.error(this.state.url_api, status, err.toString());
+    }.bind(this);
+    param.error = function(xhr, status, err) {
+      error(xhr, status, err);
       defer.reject(xhr, status, err);
-    }.bind(this));
+    }.bind(this);
+
+    jQuery.ajax(param);
 
     return defer.promise();
   }
@@ -861,6 +894,8 @@ class OurTable extends AbstractBase
       entries_per_page: this.state.entries_per_page,
       current_page: this.state.current_page,
       handleChange: this.handleChange.bind(this),
+      handleChangeNextPage: this.handleChangeNextPage.bind(this),
+      handleChangePreviousPage: this.handleChangePreviousPage.bind(this),
       tableid: this.props.tableid,
       data: this.state.data,
       key: opt.key,

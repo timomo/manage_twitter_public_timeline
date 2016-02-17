@@ -119,7 +119,9 @@ class OurDataTable extends AbstractBase
   createTable()
   {
     var prefix = "messages.datatables.";
+    var pagelength = null!==entries_per_page ? entries_per_page : 10;
     var table = $('#'+this.state.tableid).dataTable({
+      "pageLength": pagelength,
       "language": {
         "emptyTable": trans(prefix+'emptyTable'),
         "info": trans(prefix+'info'),
