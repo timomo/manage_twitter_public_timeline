@@ -778,7 +778,7 @@ class OurTable extends AbstractBase
 
   loadFromServer()
   {
-    var param = this.returnObjectShow(1);
+    var param = this.returnObjectIndex();
     var defer = $.Deferred();
 
     if (this.canGet() === false) {
