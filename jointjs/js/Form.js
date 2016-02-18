@@ -942,7 +942,17 @@ class Form extends AbstractBase
     tmp.field = <input
                   type="text" id={datas.id} name={datas.id} placeholder={datas.title} value={datas.value} disabled={disabled} onChange={func}
                 />;
-    return this.renderIconFieldToDatasObject(tmp, option)
+
+    if ('' !== disabled) {
+       tmp.field = <label className="input state-disabled">{tmp.field}</label>;
+    }
+
+    var field = this.renderIconFieldToDatasObject(tmp, option);
+    if ('' != disabled) {
+      field = <label className="input state-disabled">{field}</label>;
+    }
+
+    return field;
   }
 
   renderTextareaInput(datas, disabled, option)
@@ -1027,11 +1037,12 @@ class Form extends AbstractBase
     var tmp = jQuery.extend(true, {}, datas);
     var self = this;
     var options;
+    var className = ''!=disabled ? 'radio state-disabled' : 'radio';
     if (jQuery.isArray(values) === true) {
       options = values.map(function(name, value) {
         var checked = (value == datas.value) ? true : false;
         return (
-          <label key={value} className="radio">
+          <label key={value} className={className}>
             <input type="radio" id={datas.id} name={datas.id} value={value}
               checked={checked} onChange={self.changeRadio.bind(self)} disabled={disabled}
             />
@@ -1044,7 +1055,7 @@ class Form extends AbstractBase
         var name = values[value];
         var checked = (value == datas.value) ? true : false;
         return (
-          <label key={value} className="radio">
+          <label key={value} className={className}>
             <input type="radio" id={datas.id} name={datas.id} value={value}
               checked={checked} onChange={self.changeRadio.bind(self)} disabled={disabled}
             />
@@ -1109,7 +1120,13 @@ class Form extends AbstractBase
                     disabled={disabled} onChange={this.changeText.bind(this)}
                   />;
     }
-    return this.renderIconFieldToDatasObject(tmp, option)
+
+    var field = this.renderIconFieldToDatasObject(tmp, option);
+    if ('' != disabled) {
+      field = <label className="input state-disabled">{field}</label>;
+    }
+
+    return field;
   }
 
   /**
@@ -1147,6 +1164,11 @@ class Form extends AbstractBase
       return <option key={name} value={name} >{values[name]}</option>
     });
     var label = datas.label + " " + (this.state.invalids[datas.id] ? 'state-error' : '');
+      
+    if (''!=disabled) {
+        label += ' state-disabled';
+    }
+
     tmp.field = <label className={label}>
                   <select id={datas.id} name={datas.id} ref={datas.id} value={datas.value} onChange={this.changeSelect.bind(this)}
                     className="select2"
@@ -1155,7 +1177,6 @@ class Form extends AbstractBase
                     {options}
                   </select>
                   <i></i>
-                  <em className="invalids">{this.state.invalids[datas.id]}</em>
                 </label>;
     return this.renderIconFieldToDatasObject(tmp, option)
   }
