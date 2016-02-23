@@ -1038,8 +1038,15 @@ class Form extends AbstractBase
     var self = this;
     var options;
     var className = ''!=disabled ? 'radio state-disabled' : 'radio';
+
     if (jQuery.isArray(values) === true) {
-      options = values.map(function(name, value) {
+      options = Object.keys(values).map(function(name, value) {
+        if (jQuery.type(values[value]) === 'object') {
+          value = values[value].value;
+          name = values[value].text;
+        } else {
+          name = values[name];
+        }
         var checked = (value == datas.value) ? true : false;
         return (
           <label key={value} className={className}>
@@ -1051,8 +1058,14 @@ class Form extends AbstractBase
         )
       });
     } else {
-      options = Object.keys(values).map(function(value) {
-        var name = values[value];
+      options = Object.keys(values).map(function(name, value) {
+        if (jQuery.type(values[name]) === 'object') {
+          value = values[name].value;
+          name = values[name].text;
+        } else {
+          value = name;
+          name = values[name];
+        }
         var checked = (value == datas.value) ? true : false;
         return (
           <label key={value} className={className}>
@@ -1161,7 +1174,13 @@ class Form extends AbstractBase
     }
     var tmp = jQuery.extend(true, {}, datas);
     var options = Object.keys(values).map(function(name, value){
-      return <option key={name} value={name} >{values[name]}</option>
+      if (jQuery.type(values[name]) === 'object') {
+        var val = values[name].value;
+        var text = values[name].text;
+        return <option key={val} value={val} >{text}</option>
+      } else {
+        return <option key={name} value={name} >{values[name]}</option>
+      }
     });
     var label = datas.label + " " + (this.state.invalids[datas.id] ? 'state-error' : '');
       
@@ -1233,7 +1252,11 @@ class Form extends AbstractBase
                    </button>
                  </label>;
     var field3 = <label className={label}>
-                   <select multiple={true} id={datas.id + "_dummy"} name={datas.id + "_dummy"} className="custom-scroll select2"
+                   <select
+                     multiple={true}
+                     id={datas.id + "_dummy"}
+                     name={datas.id + "_dummy"}
+                     className="custom-scroll select2"
                    >
                      {options2}
                    </select>
