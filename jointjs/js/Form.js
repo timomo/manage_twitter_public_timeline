@@ -1200,6 +1200,40 @@ class Form extends AbstractBase
     return this.renderIconFieldToDatasObject(tmp, option)
   }
 
+  renderSelect2Field(datas, values, disabled, option)
+  {
+    if (disabled === undefined || disabled === null) {
+      disabled = '';
+    }
+    var tmp = jQuery.extend(true, {}, datas);
+    var options = Object.keys(values).map(function(name, value){
+      if (jQuery.type(values[name]) === 'object') {
+        var val = values[name].value;
+        var text = values[name].text;
+        return <option key={val} value={val} >{text}</option>
+      } else {
+        return <option key={name} value={name} >{values[name]}</option>
+      }
+    });
+    var label = datas.label + " " + (this.state.invalids[datas.id] ? 'state-error' : '');
+
+    if (''!=disabled) {
+        label += ' state-disabled';
+    }
+
+    tmp.field = <label className={label + ' select2-container select2'}>
+                  <select id={datas.id} name={datas.id} ref={datas.id} value={datas.value} onChange={this.changeSelect.bind(this)}
+                    className="select2"
+                    disabled={disabled}
+                    style={{width: '100%'}}
+                  >
+                    {options}
+                  </select>
+                  <i></i>
+                </label>;
+    return this.renderIconFieldToDatasObject(tmp, option)
+  }
+
   renderSelect2ColumnsField(datas, values, disabled, option)
   {
     if (disabled === undefined || disabled === null) {
@@ -1400,6 +1434,9 @@ class Form extends AbstractBase
       case "select":
         result = this.renderSelectField(datas, arguments[1], arguments[2], option);
         break;
+      case "select2":
+        result = this.renderSelect2Field(datas, arguments[1], arguments[2], option);
+        break;
       case "select_multiple":
         result = this.renderSelectMultipleField(datas, arguments[1], arguments[2], option);
         break;
@@ -1457,6 +1494,9 @@ class Form extends AbstractBase
         result = this.renderLabelForCheckboxInput(datas, option);
         break;
       case "select":
+        result = this.renderLabelForSelect(datas, option);
+        break;
+      case "select2":
         result = this.renderLabelForSelect(datas, option);
         break;
       case "select_multiple":
