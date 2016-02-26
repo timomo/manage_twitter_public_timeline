@@ -24,11 +24,7 @@ get_smartadmin_body_header();
             <div>
               <div class="jarviswidget-editbox"></div>
               <div class="widget-body">
-
-                <form action="" method="post" class="smart-form">
-                  <div id="aquarium" class="table-responsive"></div>
-                </form>
-
+                <div id="aquarium" class="table-responsive"></div>
               </div>
             </div>
           </div>
@@ -39,8 +35,36 @@ get_smartadmin_body_header();
 </div>
 <?php
 get_smartadmin_body_footer();
-$jss = [
-  '<script src="bundle.js"></script>',
+$matched_actions = [
+    'get_' => 1,
 ];
+?>
+<style>
+div.dt-toolbar {
+  background: initial;
+}
+</style>
+<script>
+var entries_per_page = 50;
+var base_path = 'admin';
+var matched_actions = '<?php echo json_encode($matched_actions); ?>';
+</script>
+<?php
+$files = [
+    'jointjs/js/trans.js',
+    'jointjs/js/AbstractBase.js',
+    'jointjs/js/Form.js',
+    'jointjs/js/OurTable.js',
+    'index.js',
+];
+$jss = [
+    '<script src="https://cdnjs.cloudflare.com/ajax/libs/react/0.13.3/react.js"></script>',
+    '<script src="https://cdnjs.cloudflare.com/ajax/libs/react/0.13.3/react-with-addons.js"></script>',
+    '<script src="https://cdnjs.cloudflare.com/ajax/libs/react/0.13.3/JSXTransformer.js"></script>',
+];
+foreach ($files as $file) {
+    $tag = '<script src="'. $file. '?ver='. filemtime($file). '" type="text/jsx;harmony=true" charset="UTF-8"></script>';
+    $jss[] = $tag;
+}
 get_smartadmin_footer($jss);
 ?>
