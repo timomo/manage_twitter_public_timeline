@@ -1,4 +1,4 @@
-class AquariumTableHeader extends OurTableHeader
+class AquariumTableHeader extends OurRemoteTableHeader
 {
   render()
   {
@@ -14,7 +14,7 @@ class AquariumTableHeader extends OurTableHeader
   }
 }
 
-class AquariumTableBody extends OurTableBody
+class AquariumTableBody extends OurRemoteTableBody
 {
   render()
   {
@@ -40,7 +40,7 @@ class AquariumTableBody extends OurTableBody
   }
 }
 
-class AquariumTable extends OurTable
+class AquariumTable extends OurRemoteTable
 {
   render()
   {
@@ -95,6 +95,7 @@ AquariumTable.defaultProps = {
   tableid: 'aquarium-table',
   entries_per_pages: [50, 100, 200],
   messages_prefix: 'test',
+  serverSide: true,
 };
 
 React.render(

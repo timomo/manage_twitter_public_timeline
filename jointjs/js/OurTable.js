@@ -654,7 +654,8 @@ class OurTable extends AbstractBase
 
   handleChangeEntriesPerPage(e)
   {
-    this.setState({entries_per_page: e.target.value});
+    var entries_per_page = parseInt(e.target.value);
+    this.setState({entries_per_page: entries_per_page});
   }
 
   handleChange(page, e)

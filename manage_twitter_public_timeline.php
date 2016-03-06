@@ -55,6 +55,7 @@ $files = [
     'jointjs/js/AbstractBase.js',
     'jointjs/js/Form.js',
     'jointjs/js/OurTable.js',
+    'jointjs/js/OurRemoteTable.js',
     'index.js',
 ];
 $jss = [
