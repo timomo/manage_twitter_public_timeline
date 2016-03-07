@@ -2093,7 +2093,14 @@ class Form extends AbstractBase
                 regex : ":attributeに正しい形式をご指定ください。",
                 email : ":attributeに正しい形式をご指定ください。",
                 equalTo : "同じ値を入れてください。",
+                number : "数字を入れてください。",
+                notEqualTo: ':attributeは、これ以外の値でご指定ください。',
                 minlength : ":attributeは、:max以上でご指定ください。",
+                mb_strlen: ':attributeは、:max文字以下でご指定ください。',
+                bytes2: ':attributeは、:max文字以下でご指定ください。',
+                date: ':attributeに正しい形式をご指定ください。',
+                time: ':attributeに正しい形式をご指定ください。',
+                time_if: ':attributeに正しい形式をご指定ください。',
             },
             'en' : {
                 required : "The :attribute field is required.",
@@ -2103,7 +2110,14 @@ class Form extends AbstractBase
                 regex : "The :attribute format is invalid.",
                 email : "The :attribute format is invalid.",
                 equalTo : "Please enter the same value again.",
+                number: "The :attribute format is invalid.",
+                notEqualTo : "The :attribute xxxx :max xxxx.",
                 minlength : "The :attribute may not be less than :max characters.",
+                mb_strlen: 'The :attribute may not be greater than :max characters.',
+                bytes2: 'The :attribute may not be greater than :max characters.',
+                date : "The :attribute format is invalid.",
+                time : "The :attribute format is invalid.",
+                time_if : "The :attribute format is invalid.",
             },
         };
         return message_templates;
@@ -2253,9 +2267,52 @@ class Form extends AbstractBase
       return /^(?:(?:(?:https?|ftp):)?\/\/)(?:\S+(?::\S*)?@)?(?:(?!(?:10|127)(?:\.\d{1,3}){3})(?!(?:169\.254|192\.168)(?:\.\d{1,3}){2})(?!172\.(?:1[6-9]|2\d|3[0-1])(?:\.\d{1,3}){2})(?:[1-9]\d?|1\d\d|2[01]\d|22[0-3])(?:\.(?:1?\d{1,2}|2[0-4]\d|25[0-5])){2}(?:\.(?:[1-9]\d?|1\d\d|2[0-4]\d|25[0-4]))|(?:(?:[a-z\u00a1-\uffff0-9]-*)*[a-z\u00a1-\uffff0-9]+)(?:\.(?:[a-z\u00a1-\uffff0-9]-*)*[a-z\u00a1-\uffff0-9]+)*(?:\.(?:[a-z\u00a1-\uffff]{2,})).?)(?::\d{2,5})?(?:[/?#]\S*)?$/i.test( value );
     }, 'url_if');
 
+    jQuery.validator.addMethod("time_if", function(value, element, param) {
+      var v = $(param, '#' + _this.props.formid).val();
+      // 日付に何も入力がなければ
+      if (typeof v == 'string' && !v.trim() || typeof v == 'undefined' || v === null) {
+        if (typeof value == 'string' && !value.trim() || typeof value == 'undefined' || value === null) {
+          return true;
+        } else {
+          return false;
+        }
+      }
+      return value.match(/^\d{1,2}:\d{1,2}(:\d{1,2})*/);
+    }, 'time_if');
+
+    jQuery.validator.addMethod("time", function(value, element, param) {
+      if (typeof value == 'string' && !value.trim() || typeof value == 'undefined' || value === null) {
+        return true;
+      }
+      return value.match(/^\d{1,2}:\d{1,2}(:\d{1,2})*/);
+    }, 'time');
+
+    jQuery.validator.addMethod('notEqualTo', function(value, element, param) {
+      return value === param ? false : true;
+    }, 'notEqualTo');
+
     jQuery.validator.addMethod("regex", function(value, element, param) {
       return value.match(param);
     }, 'regex');
+
+    jQuery.validator.addMethod("mb_strlen", function(value, element, param) {
+      var len = 0;
+      for ( var i = 0; i < value.length; i++ ) {
+        var c = value.charCodeAt(i);
+        if ((c >= 0x0 && c < 0x81) || (c == 0xf8f0) || (c >= 0xff61 && c < 0xffa0) || (c >= 0xf8f1 && c < 0xf8f4)) {
+          len += 1;
+        } else {
+          len += 1;
+        }
+      }
+      return len < param;
+    }, 'mb_strlen');
+
+    jQuery.validator.addMethod("bytes2", function(value, element, param) {
+      var tmp = (value).replace(/\r\n?/g, "\n");
+      tmp = encodeURIComponent(tmp).replace(/%0A/g,"xx");
+      return (tmp.replace(/%../g,"x").length) < param;
+    }, 'bytes2');
   }
 }
 

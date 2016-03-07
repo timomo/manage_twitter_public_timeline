@@ -132,8 +132,8 @@ class OurRemoteTable extends OurTable
 
     if (state.serverSide === true) {
       var data = jQuery.extend(true, {}, param.data);
-      data.page = state.current_page;
-      data.select_per_page = state.entries_per_page;
+      data.skip = state.current_page;
+      data.take = state.entries_per_page;
       param.data = data;
     }
 
@@ -141,7 +141,7 @@ class OurRemoteTable extends OurTable
     var error = param.error;
 
     param.success = function(data, status, xhr) {
-      var total_entries = parseInt(xhr.getResponseHeader('X-Total-Count'));
+      var total_entries = parseInt(xhr.getResponseHeader('X-ORION-Total-Count'));
       /*
       if (state.entries_per_page === data.length) {
         total_entries += 1;
