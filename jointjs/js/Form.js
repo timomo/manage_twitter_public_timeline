@@ -251,6 +251,8 @@ class Form extends AbstractBase
             invalids[id] = (invalids[id] ? invalids[id] : '') + value.join(", ");
           });
           this.setState({invalids: invalids});
+        } else if (404 === xhr.status) {
+          this.setState({server_error: trans('messages.error.404')});
         } else if (403 === xhr.status) {
           this.setState({server_error: trans('messages.error.403')});
         } else {
@@ -319,6 +321,8 @@ class Form extends AbstractBase
                     this.setState({invalids: invalids});
                 } else if (403 === xhr.status) {
                     this.setState({server_error: trans('messages.error.403')});
+                } else if (404 === xhr.status) {
+                    this.setState({server_error: trans('messages.error.404')});
                 } else {
                     this.setState({server_error: trans('messages.error.500')});
                 }
@@ -379,6 +383,8 @@ class Form extends AbstractBase
             invalids[id] = (invalids[id] ? invalids[id] : '') + value.join(", ");
           });
           this.setState({invalids: invalids});
+        } else if (404 === xhr.status) {
+          this.setState({server_error: trans('messages.error.404')});
         } else if (403 === xhr.status) {
           this.setState({server_error: trans('messages.error.403')});
         } else {
@@ -431,6 +437,8 @@ class Form extends AbstractBase
             invalids[id] = (invalids[id] ? invalids[id] : '') + value.join(", ");
           });
           this.setState({invalids: invalids});
+        } else if (404 === xhr.status) {
+          this.setState({server_error: trans('messages.error.404')});
         } else if (403 === xhr.status) {
           this.setState({server_error: trans('messages.error.403')});
         } else {
@@ -474,6 +482,8 @@ class Form extends AbstractBase
             invalids[id] = (invalids[id] ? invalids[id] : '') + value.join(", ");
           });
           this.setState({invalids: invalids});
+        } else if (404 === xhr.status) {
+          this.setState({server_error: trans('messages.error.404')});
         } else if (403 === xhr.status) {
           this.setState({server_error: trans('messages.error.403')});
         } else {
@@ -524,6 +534,8 @@ class Form extends AbstractBase
             invalids[id] = (invalids[id] ? invalids[id] : '') + value.join(", ");
           });
           this.setState({invalids: invalids});
+        } else if (404 === xhr.status) {
+          this.setState({server_error: trans('messages.error.404')});
         } else if (403 === xhr.status) {
           this.setState({server_error: trans('messages.error.403')});
         } else {
@@ -582,6 +594,8 @@ class Form extends AbstractBase
             invalids[id] = (invalids[id] ? invalids[id] : '') + value.join(", ");
           });
           this.setState({invalids: invalids});
+        } else if (404 === xhr.status) {
+          this.setState({server_error: trans('messages.error.404')});
         } else if (403 === xhr.status) {
           this.setState({server_error: trans('messages.error.403')});
         } else {
@@ -638,6 +652,8 @@ class Form extends AbstractBase
             invalids[id] = (invalids[id] ? invalids[id] : '') + value.join(", ");
           });
           this.setState({invalids: invalids});
+        } else if (404 === xhr.status) {
+          this.setState({server_error: trans('messages.error.404')});
         } else if (403 === xhr.status) {
           this.setState({server_error: trans('messages.error.403')});
         } else {
@@ -697,6 +713,8 @@ class Form extends AbstractBase
                         invalids[id] = (invalids[id] ? invalids[id] : '') + value.join(", ");
                     });
                     this.setState({invalids: invalids});
+                } else if (404 === xhr.status) {
+                    this.setState({server_error: trans('messages.error.404')});
                 } else if (403 === xhr.status) {
                     this.setState({server_error: trans('messages.error.403')});
                 } else {
@@ -752,6 +770,8 @@ class Form extends AbstractBase
                         invalids[id] = (invalids[id] ? invalids[id] : '') + value.join(", ");
                     });
                     this.setState({invalids: invalids});
+                } else if (404 === xhr.status) {
+                    this.setState({server_error: trans('messages.error.404')});
                 } else if (403 === xhr.status) {
                     this.setState({server_error: trans('messages.error.403')});
                 } else {
