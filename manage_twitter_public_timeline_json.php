@@ -18,7 +18,7 @@ use Illuminate\Database\Eloquent\Collection;
 $parser = new \Symfony\Component\Serializer\Encoder\JsonDecode();
 
 $limit = (int) $_SESSION["common"]["per_page"];
-$page = (int) $_REQUEST["page"];
+$page = (int) $_REQUEST["skip"];
 $limit = $limit === 0 ? 10 : $limit;
 $page = $page === 0 ? 1 : $page;
 $pageLimit = $limit;
@@ -57,5 +57,5 @@ foreach($collection as $tweet) {
 }
 
 header("Content-Type: text/javascript; charset=utf-8");
-header("X-Total-Count: ". $total);
+header("X-ORION-Total-Count: ". $total);
 print $items->toJson();
