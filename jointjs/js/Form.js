@@ -1061,17 +1061,28 @@ class Form extends AbstractBase
 
     if (jQuery.isArray(values) === true) {
       options = Object.keys(values).map(function(name, value) {
+        var radioDisabled = disabled;
         if (jQuery.type(values[value]) === 'object') {
           value = values[value].value;
           name = values[value].text;
+          if ('disabled' in values[value]) {
+            radioDisabled = values[value].disabled;
+          }
         } else {
           name = values[name];
+          radioDisabled = disabled;
         }
         var checked = (value == datas.value) ? true : false;
+        var radioClassName = ''!=radioDisabled ? 'radio state-disabled' : 'radio';
+        var onChange = self.changeRadio.bind(self);
+        if (radioDisabled === true) {
+          onChange = null;
+        }
+
         return (
-          <label key={value} className={className}>
+          <label key={value} className={radioClassName}>
             <input type="radio" id={datas.id} name={datas.id} value={value}
-              checked={checked} onChange={self.changeRadio.bind(self)} disabled={disabled}
+              checked={checked} onChange={onChange} disabled={radioDisabled}
             />
             <i></i>{name}
           </label>
