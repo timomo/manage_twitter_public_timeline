@@ -6,7 +6,7 @@ class OurRemoteTableBody extends OurTableBody
 {
 }
 
-class OurRemoteTablePageHeader extends OurTablePageFooter
+class OurRemoteTablePageHeader extends OurTablePageHeader
 {
 }
 
@@ -147,12 +147,18 @@ class OurRemoteTable extends OurTable
         total_entries += 1;
       }
       */
-      var rawData = new Array(state.entries_per_page * (state.current_page - 1));
+      var cnt = state.entries_per_page * (state.current_page - 1);
+      if (cnt !== 0) {
+        // cnt += 1;
+      }
+      var rawData = new Array(cnt);
       data.forEach(function(row, i) {
         rawData.push(row);
       }.bind(this));
-      this.setState({rawData: rawData});
-      this.setState({total_entries: total_entries});
+      this.setState({
+        total_entries: total_entries,
+        rawData: rawData,
+      });
       defer.resolve(data, status, xhr);
     }.bind(this);
     param.error = function(xhr, status, err) {

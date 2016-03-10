@@ -137,7 +137,7 @@ class OurTablePageHeader extends Form
     }
 
     return (
-      <div className="dt-toolbar" style={{'borderBottom': '0px!important'}}>
+      <div className="dt-toolbar" style={{'borderBottom': '0px!important', 'background': 'initial'}}>
         <div className="col-xs-12 col-sm-4">
           {buttons}
         </div>
@@ -386,6 +386,12 @@ class OurTable extends AbstractBase
       next_page: null,
       serverSide: Boolean(props.serverSide) === false ? false : props.serverSide,
     };
+  }
+
+  handleChangeEntriesPerPage(e)
+  {
+    var entries_per_page = parseInt(e.target.value);
+    this.setState({entries_per_page: entries_per_page});
   }
 
   returnRawDataById(id)
@@ -650,12 +656,6 @@ class OurTable extends AbstractBase
   handleChangeSearchText(e)
   {
     this.setState({search_text: e.target.value});
-  }
-
-  handleChangeEntriesPerPage(e)
-  {
-    var entries_per_page = parseInt(e.target.value);
-    this.setState({entries_per_page: entries_per_page});
   }
 
   handleChange(page, e)
