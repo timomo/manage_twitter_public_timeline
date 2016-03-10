@@ -24,7 +24,7 @@ class OurRemoteTable extends OurTable
 
   componentWillMount()
   {
-    this.loadFromServerWithState(this.state);
+    var promise = this.loadFromServerWithState(this.state);
   }
 
   componentWillUpdate(nextProps, nextState)
@@ -36,19 +36,20 @@ class OurRemoteTable extends OurTable
     if (this.state.current_page !== nextState.current_page) {
       isPageUpdate = true;
     }
-    if (this.state.total_entries !== nextState.total_entries) {
-      isPageUpdate = true;
-    }
     if (this.state.entries_per_page !== nextState.entries_per_page) {
       isPageUpdate = true;
     }
     if (isPageUpdate === true) {
       var promise = this.loadFromServerWithState(nextState);
-      promise.done(function(data, status, xhr) {
-        this.calculatePage(nextState);
-      }.bind(this));
-      promise.fail(function(xhr, status, err) {
-      }.bind(this));
+    }
+  }
+
+  componentDidUpdate(prevProps, prevState)
+  {
+    var str1 = JSON.stringify(prevState.rawData);
+    var str2 = JSON.stringify(this.state.rawData);
+    if (str1 !== str2) {
+      this.calculatePage(this.state);
     }
   }
 
@@ -101,7 +102,6 @@ class OurRemoteTable extends OurTable
       }
       data.push(raw);
     }
-
     this.setState({
       first: first,
       last: last,
@@ -142,15 +142,7 @@ class OurRemoteTable extends OurTable
 
     param.success = function(data, status, xhr) {
       var total_entries = parseInt(xhr.getResponseHeader('X-ORION-Total-Count'));
-      /*
-      if (state.entries_per_page === data.length) {
-        total_entries += 1;
-      }
-      */
       var cnt = state.entries_per_page * (state.current_page - 1);
-      if (cnt !== 0) {
-        // cnt += 1;
-      }
       var rawData = new Array(cnt);
       data.forEach(function(row, i) {
         rawData.push(row);
