@@ -113,6 +113,13 @@ class OurRemoteTable extends OurTable
     });
   }
 
+  handleClick(e)
+  {
+    this.destroyTable();
+    e.preventDefault();
+    this.loadFromServerWithState(this.state);
+  }
+
   loadFromServerWithState(state)
   {
     if (state === undefined) {
