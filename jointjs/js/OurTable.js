@@ -399,6 +399,9 @@ class OurTable extends AbstractBase
     var rawData = this.state.rawData;
     for (var i = 0; i < rawData.length; i++) {
       var row = rawData[i];
+      if (row === undefined) {
+        continue;
+      }
       if (row.id === id) {
         return row;
       }
