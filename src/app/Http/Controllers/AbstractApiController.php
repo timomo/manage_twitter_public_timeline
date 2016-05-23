@@ -35,6 +35,7 @@ abstract class AbstractApiController extends Controller
         $this->middleware('permission');
         $this->middleware('get_lang');
         $this->middleware('auditlog');
+        $this->middleware('maintenance');
 
         if (is_null(Route::currentRouteAction())) {
             return;
@@ -52,9 +53,12 @@ abstract class AbstractApiController extends Controller
         }
 
         # Maintenance
+        /*
         $key = "maintenance.".strtolower($model);
+        \Log::debug(print_r($key, true));
         $this->m_access   = \Config::has($key.".access")?  \Config($key.".access") : true;
         $this->m_message  = \Config::has($key.".message")? \Config($key.".message"): '';
+        */
     }
 
     protected function checkMaintenance()
@@ -62,11 +66,15 @@ abstract class AbstractApiController extends Controller
         if (false === $this->m_access) {
             return response()->json($this->m_message, 503);
         }
+        return false;
     }
 
     public function index()
     {
-        $this->checkMaintenance();
+        $ret = $this->checkMaintenance();
+        if (false !== $ret) {
+            return $ret;
+        }
 
         try {
             $model = $this->model;
@@ -83,7 +91,10 @@ abstract class AbstractApiController extends Controller
 
     public function store()
     {
-        $this->checkMaintenance();
+        $ret = $this->checkMaintenance();
+        if (false !== $ret) {
+            return $ret;
+        }
 
         try {
             $model = $this->model;
@@ -103,7 +114,10 @@ abstract class AbstractApiController extends Controller
 
     public function show($id)
     {
-        $this->checkMaintenance();
+        $ret = $this->checkMaintenance();
+        if (false !== $ret) {
+            return $ret;
+        }
 
         try {
             $model = $this->model;
@@ -121,7 +135,10 @@ abstract class AbstractApiController extends Controller
 
     public function update($id)
     {
-        $this->checkMaintenance();
+        $ret = $this->checkMaintenance();
+        if (false !== $ret) {
+            return $ret;
+        }
 
         try {
             $model = $this->model;
@@ -144,7 +161,10 @@ abstract class AbstractApiController extends Controller
 
     public function destroy($id)
     {
-        $this->checkMaintenance();
+        $ret = $this->checkMaintenance();
+        if (false !== $ret) {
+            return $ret;
+        }
 
         try {
             $model = $this->model;
@@ -162,23 +182,5 @@ abstract class AbstractApiController extends Controller
             $this->app['Illuminate\Contracts\Debug\ExceptionHandler']->report($e);
             return response()->json(null, 500);
         }
-    }
-
-    protected function createCoreAuditlog()
-    {
-        $user_id = 0;
-        if (!empty(Auth::user())) {
-            $user_id = Auth::user()['id'];
-        }
-        list($controller, $action) = explode('@', Route::currentRouteAction());
-        $application_id = $controller::$application_id;
-        $action_id = $this->actions[$action];
-
-        CoreAuditlog::create(array(
-           'user_id' => $user_id,
-           'application_id' => $application_id,
-           'action' => $action_id,
-           'result' => 1,
-        ));
     }
 }

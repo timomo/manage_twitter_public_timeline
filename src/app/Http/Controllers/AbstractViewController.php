@@ -12,6 +12,7 @@ abstract class AbstractViewController extends Controller
         $this->middleware('permission', ['except' => 'redirect']);
         $this->middleware('get_lang');
         $this->middleware('get_core_menu');
+        $this->middleware('maintenance');
     }
 
     protected function getView()
@@ -34,6 +35,7 @@ abstract class AbstractViewController extends Controller
         }
 
         # Maintenance
+        /*
         $m_access  = \Config::has("maintenance.".$view.".access")?  \Config("maintenance.".$view.".access") : true;
         $m_message = \Config::has("maintenance.".$view.".message")? \Config("maintenance.".$view.".message"): '';
 
@@ -41,7 +43,8 @@ abstract class AbstractViewController extends Controller
             return view('errors.503', compact('m_message'));
         }
 
-        return view($string, compact('m_message'));
+        */
+        return view($string);
     }
 
     public function index()
