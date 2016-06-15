@@ -35,7 +35,7 @@ class OurTableBody extends AbstractBase
     month = this.paddingZero(month);
     var day = dtcls.getDate();
     day = this.paddingZero(day);
-    var hour = dtcls.getHours() + 9; // timezone
+    var hour = dtcls.getHours();
     hour  = this.paddingZero(hour);
     var min = dtcls.getMinutes();
     min = this.paddingZero(min);
@@ -92,6 +92,15 @@ class OurTablePageHeader extends Form
   returnDatasObject()
   {
     var datasObj = super();
+    if (false === datasObj) {
+      datasObj = {};
+    }
+    if ('search' in datasObj === false) {
+      datasObj.search = {};
+    }
+    if ('entries_per_page' in datasObj === false) {
+      datasObj.entries_per_page = {};
+    }
     datasObj.search.value = this.props.search;
     datasObj.search.cols = [2, 4];
     datasObj.entries_per_page.value = this.props.entries_per_page;
@@ -110,7 +119,7 @@ class OurTablePageHeader extends Form
     var buttons = [];
 
     if (this.props.button === true) {
-      if (this.canEdit() === true) {
+      if (this.canGet() === true) {
         buttons.push(
           <button
             type="button"
@@ -369,6 +378,7 @@ class OurTable extends AbstractBase
     this.state = {
       rawData: [],
       data: [],
+      last_accessed: null,
       url_api: props.url_api,
       interval: props.interval,
       disabled_button: false,
@@ -748,6 +758,58 @@ class OurTable extends AbstractBase
     return ret;
   }
 
+  returnObjectShow(id)
+  {
+    var url_api = this.props.url_api;
+    if (Boolean(this.state.url_api) !== false) {
+      url_api = this.state.url_api;
+    }
+    var url = url_api + "/" + id;
+
+    var ret = {
+      url: url,
+      dataType: 'json',
+      type: 'GET',
+      cache: false,
+      success: function(data) {
+        var data1 = jQuery.isPlainObject(data) === true ? data : {};
+        var datas = jQuery.extend(true, {}, this.state.datas, data1);
+        this.setState({datas:datas});
+      }.bind(this),
+      error: function(xhr, status, err) {
+        console.error(status, err.toString());
+        var invalids = {};
+        this.setState({invalids: invalids});
+        if (422 === xhr.status) {
+          var responseJson = JSON.parse(xhr.responseText);
+          $.each(responseJson, function(id, value) {
+            var divid = "div_" + id;
+            var emid = "em_" + id;
+            $('#' + divid).addClass("state-error");
+            $('#' + emid).html(value.join(", "));
+            invalids[id] = (invalids[id] ? invalids[id] : '') + value.join(", ");
+          });
+          this.setState({invalids: invalids});
+        } else if (404 === xhr.status) {
+          this.setState({server_error: trans('messages.error.404')});
+        } else if (403 === xhr.status) {
+          this.setState({server_error: trans('messages.error.403')});
+        } else {
+          this.setState({server_error: trans('messages.error.500')});
+        }
+      }.bind(this)
+    };
+
+    return ret;
+  }
+
+  shouldListUpdate(previous, now)
+  {
+    var previousJson = JSON.stringify(previous);
+    var nowJson = JSON.stringify(now);
+    return nowJson !== previousJson;
+  }
+
   returnObjectIndex()
   {
     var url_api = this.props.url_api;
@@ -761,7 +823,12 @@ class OurTable extends AbstractBase
       type: 'GET',
       cache: false,
       success: function(data, status, xhr) {
-        this.setState({rawData: data});
+        if (this.shouldListUpdate(this.state.rawData, data) === true) {
+          this.setState({total_entries: 0});
+        }
+        this.setState({
+          rawData: data
+        });
         this.setState({total_entries: data.length});
       }.bind(this),
       error: function(xhr, status, err) {
@@ -797,6 +864,9 @@ class OurTable extends AbstractBase
     var error = param.error;
 
     param.success = function(data, status, xhr) {
+      var date = xhr.getResponseHeader('Date');
+      var epoch = Date.parse(date);
+      this.setState({last_accessed: epoch});
       success(data, status, xhr);
       defer.resolve(data);
     }.bind(this);
@@ -919,6 +989,7 @@ class OurTable extends AbstractBase
     var props = this.returnDefaultProps(opt);
     props.formid = this.props.tableid + '-search-form1';
     props.input_type = [];
+    props.handleExport = this.handleExport.bind(this);
     var pageFooter = React.createElement(classOfPageFooter, props);
     return pageFooter;
   }
@@ -937,6 +1008,8 @@ class OurTable extends AbstractBase
     ];
     props.handleClick = this.handleClick.bind(this);
     props.handleCreate = this.handleCreate.bind(this);
+    props.handleImport = this.handleImport.bind(this);
+    props.handleExport = this.handleExport.bind(this);
     props.handleChangeEntriesPerPage = this.handleChangeEntriesPerPage.bind(this);
     props.handleChangeSearchText = this.handleChangeSearchText.bind(this);
     var pageHeader = React.createElement(classOfPageHeader, props);

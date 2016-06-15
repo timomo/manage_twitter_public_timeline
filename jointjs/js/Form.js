@@ -103,6 +103,7 @@ class Form extends AbstractBase
           <button type="button"
             key="edit"
             className="btn btn-primary btn-lg pull-right header-btn"
+            disabled={this.state.disabled_button}
             onClick={this.handleConfirm.bind(this)}
           >
             <i className="fa fa-circle-arrow-up fa-lg"></i>
@@ -116,6 +117,7 @@ class Form extends AbstractBase
             data-toggle="modal"
             href={'#' + this.props.formid + '-modal-del'}
             className="btn btn-danger btn-lg pull-left header-btn"
+            disabled={this.state.disabled_button}
             key="delete"
           >
             <i className="fa fa-circle-arrow-up fa-lg"></i>
@@ -860,13 +862,24 @@ class Form extends AbstractBase
       var to = jQuery("#" + toId).get(0);
       var options = from.options;
       var values = jQuery.isArray(datas[from.id]) === true ? datas[from.id] : [];
+      var hit = 0;
       for (var i = 0, l = options.length; i < l; i++) {
         if (options[i].selected === true) {
           var idx = jQuery.inArray(options[i].value, values);
           if (idx !== -1) {
+            if (i === 0) {
+              hit = 1;
+            } else {
+              hit = 2;
+            }
             values.splice(idx, 1);
           }
         }
+      }
+      if (hit === 1) {
+        jQuery('#' + fromId).val(jQuery('#' + fromId + ' option:eq(1)').val());
+      } else if (hit === 2) {
+        jQuery('#' + fromId).val(jQuery('#' + fromId + ' option:first').val());
       }
       datas[from.id] = values;
       this.setState({datas: datas});
@@ -1010,7 +1023,7 @@ class Form extends AbstractBase
     }
     var tmp = jQuery.extend(true, {}, datas);
     var self = this;
-    var options = Object.keys(values).map(function(value) {
+    var options = Object.keys(values).map(function(value, i) {
       var name = values[value];
       var checked = jQuery.inArray(value, datas.value) !== -1 ? true : false;
       return (
@@ -1060,16 +1073,25 @@ class Form extends AbstractBase
     var className = ''!=disabled ? 'radio state-disabled' : 'radio';
 
     if (jQuery.isArray(values) === true) {
-      options = Object.keys(values).map(function(name, value) {
+      options = values.map(function(tmp, i) {
+        var name;
+        var value; 
         var radioDisabled = disabled;
-        if (jQuery.type(values[value]) === 'object') {
-          value = values[value].value;
-          name = values[value].text;
+        if (jQuery.type(tmp) === 'object') {
+          value = tmp.value;
+          name = tmp.text;
           if ('disabled' in values[value]) {
             radioDisabled = values[value].disabled;
           }
-        } else {
-          name = values[name];
+        } else if (jQuery.type(tmp) === 'array') {
+          value = tmp[0];
+          name = tmp[1];
+          if (tmp.length === 3) {
+            radioDisabled = tmp[2];
+          }
+        } else { // string
+          name = tmp; 
+          value = i; 
           radioDisabled = disabled;
         }
         var checked = (value == datas.value) ? true : false;
@@ -1325,8 +1347,6 @@ class Form extends AbstractBase
                    >
                      {options2}
                    </select>
-                   <i></i>
-                   <em className="invalids">{this.state.invalids[datas.id]}</em>
                  </label>;
     tmp.field = [field1, field2, field3];
     return this.renderIconFieldToDatasObject(tmp, option)
@@ -1846,8 +1866,18 @@ class Form extends AbstractBase
   {
     var tmp = jQuery.extend(true, {}, datas);
     jQuery('#' + datas.id).val(datas.value);
+    /*
     var value =  $('input[name="' + datas.id + '"]:checked').siblings('span').html();
-    tmp.field = value;
+    */
+    var value = [];
+    jQuery("input[name='" + datas.id + "']").each(function (index, element) {
+      var input = jQuery(element);
+      if (-1 !== jQuery.inArray(input.val(), datas.value)) {
+        value.push(input.siblings('span').html());
+      }
+    }.bind(this));
+    
+    tmp.field = value.join(' ');
     tmp.label = '';
     return this.renderLabelFieldToDatasObject(tmp, option);
   }
@@ -1888,7 +1918,14 @@ class Form extends AbstractBase
   renderLabelForRadioInput(datas, option)
   {
     var tmp = jQuery.extend(true, {}, datas);
-    var value = $("input[name='" + datas.id + "']:checked").parent().text();
+    // var value = $("input[name='" + datas.id + "']:checked").parent().text();
+    var value;
+    jQuery("input[name='" + datas.id + "']").each(function (index, element) {
+      var input = jQuery(element);
+      if (datas.value + '' === input.val()) {
+        value = input.parent().text();
+      }
+    }.bind(this));
     tmp.field = value;
     tmp.label = '';
     return this.renderLabelFieldToDatasObject(tmp, option);
@@ -1924,6 +1961,9 @@ class Form extends AbstractBase
 
     setTimepickerVal(key)
     {
+	if ($('#'+key).data('timepicker')) {
+		return;
+	}
 	var _this = this;
 	$('#'+key).timepicker(
             {
@@ -1977,7 +2017,7 @@ class Form extends AbstractBase
               </label>
               <div className="col col-10 inline-group">
                 <div className="col col-3">
-                  {this.renderLabelForDatePickerInput(datasObj[start_date], null, '', {section: false, label: false})}
+                  {this.renderLabelForDatePickerInput(datasObj[start_date], null, {section: false, label: false})}
                 </div>
                 <div className="col col-2">
                   {this.renderLabelForTimePickerInput(datasObj[start_time], '')}
@@ -1986,7 +2026,7 @@ class Form extends AbstractBase
                   {trans('messages.form.between')}
                 </div>
                 <div className="col col-3">
-                  {this.renderLabelForDatePickerInput(datasObj[end_date], null, '', {section: false, label: false})}
+                  {this.renderLabelForDatePickerInput(datasObj[end_date], null, {section: false, label: false})}
                 </div>
                 <div className="col col-2">
                   {this.renderLabelForTimePickerInput(datasObj[end_time], '')}
@@ -2014,6 +2054,30 @@ class Form extends AbstractBase
                 </div>
                 <div className="col col-2">
                   {this.renderTimePickerInput(datasObj[end_time], '')}
+                </div>
+              </div>
+            </div>
+          </section>
+        );
+    }
+
+    renderLabelValidityPeriodOnlyTime(datasObj, start_time, end_time)
+    {
+        return (
+          <section>
+            <div className="row">
+              <label className="label col col-2">
+                {trans('messages.form.available_period')}
+              </label>
+              <div className="col col-10 inline-group">
+                <div className="col col-2">
+                  {this.renderLabelForTimePickerInput(datasObj[start_time], '')}
+                </div>
+                <div className="col col-2">
+                  {trans('messages.form.between')}
+                </div>
+                <div className="col col-2">
+                  {this.renderLabelForTimePickerInput(datasObj[end_time], '')}
                 </div>
               </div>
             </div>
@@ -2117,6 +2181,7 @@ class Form extends AbstractBase
     returnValidationMessageTemplates() {
         var message_templates = {
             'ja' : {
+                range: ":attributeは:param1から:param2の間でご指定ください。",
                 required : ":attributeは必ず指定してください。",
                 maxlength : ":attributeは、:max文字以下でご指定ください。",
                 required_if : ":attributeは必ず指定してください。",
@@ -2134,6 +2199,7 @@ class Form extends AbstractBase
                 time_if: ':attributeに正しい形式をご指定ください。',
             },
             'en' : {
+                range: 'The :attribute format is invalid. value is required between :param1 and :param2',
                 required : "The :attribute field is required.",
                 maxlength : "The :attribute may not be greater than :max characters.",
                 required_if : "The :attribute field is required.",
@@ -2231,6 +2297,10 @@ class Form extends AbstractBase
           console.warn('not found column: ' + column);
         }
         msg = msg.replace(":attribute", datasObj[column] === undefined ? '' : datasObj[column].title);
+        if ('range' === rule) {
+          msg = msg.replace(":param1", param[0]);
+          msg = msg.replace(":param2", param[1]);
+        }
         msg = msg.replace(":max", param);
         message_hash[rule] = msg;
       });

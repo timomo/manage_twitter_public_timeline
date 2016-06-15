@@ -46,8 +46,14 @@ class OurRemoteTable extends OurTable
 
   componentDidUpdate(prevProps, prevState)
   {
-    var str1 = JSON.stringify(prevState.rawData);
-    var str2 = JSON.stringify(this.state.rawData);
+    var str1 = '';
+    var str2 = '';
+    if (undefined !== prevState && 'rawData' in prevState) {
+      str1 = JSON.stringify(prevState.rawData);
+    }
+    if (undefined !== this.state && 'rawData' in this.state) {
+      str2 = JSON.stringify(this.state.rawData);
+    }
     if (str1 !== str2) {
       this.calculatePage(this.state);
     }
@@ -115,6 +121,7 @@ class OurRemoteTable extends OurTable
 
   handleClick(e)
   {
+    this.setState({server_error: ''});
     this.destroyTable();
     e.preventDefault();
     this.loadFromServerWithState(this.state);
@@ -149,12 +156,18 @@ class OurRemoteTable extends OurTable
 
     param.success = function(data, status, xhr) {
       var total_entries = parseInt(xhr.getResponseHeader('X-ORION-Total-Count'));
+      var date = xhr.getResponseHeader('Date');
+      var epoch = Date.parse(date);
       var cnt = state.entries_per_page * (state.current_page - 1);
       var rawData = new Array(cnt);
       data.forEach(function(row, i) {
         rawData.push(row);
       }.bind(this));
+      if (this.shouldListUpdate(this.state.rawData, rawData) === true) {
+        this.setState({total_entries: 0});
+      }
       this.setState({
+        last_accessed: epoch,
         total_entries: total_entries,
         rawData: rawData,
       });

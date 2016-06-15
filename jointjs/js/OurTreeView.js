@@ -263,6 +263,7 @@ class OurDataTree extends AbstractBase
   render()
   {
     var display_server_error = this.state.server_error ? "block" : "none";
+    var display_get = this.canGety() ? "show" : "none";
     var display_create = this.canAdd() ? "show" : "none";
     var className = this.getName();
     var classNameOfBody = className + 'Body';
@@ -293,6 +294,7 @@ class OurDataTree extends AbstractBase
             <button
               type="button"
               className="btn btn-default"
+              style={{display: display_get}}
               onClick={this.handleClick.bind(this)}
             >
               <i className="fa fa-repeat"></i> {trans('messages.button.reload')}
